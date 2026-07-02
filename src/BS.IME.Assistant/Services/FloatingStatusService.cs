@@ -166,7 +166,6 @@ public sealed class FloatingStatusService : IDisposable
             return;
         }
 
-        _window.Width = _settings.FloatingStatus.Width;
         _window.Height = _settings.FloatingStatus.Height;
         _window.ClampToScreen();
     }
