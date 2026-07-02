@@ -12,6 +12,8 @@ public sealed class TrayService : IDisposable
     private ToolStripMenuItem? _foregroundItem;
     private ToolStripMenuItem? _currentImeItem;
     private ToolStripMenuItem? _toggleItem;
+    private ToolStripMenuItem? _showFloatingItem;
+    private ToolStripMenuItem? _hideFloatingItem;
     private ToolStripMenuItem? _hotkeyFailureItem;
     private bool _disposed;
 
@@ -23,6 +25,8 @@ public sealed class TrayService : IDisposable
     public event Action? ToggleEnabledRequested;
     public event Action? SwitchChineseRequested;
     public event Action? SwitchEnglishRequested;
+    public event Action? ShowFloatingRequested;
+    public event Action? HideFloatingRequested;
     public event Action? OpenSettingsRequested;
     public event Action? OpenLogsRequested;
     public event Action? ExitRequested;
@@ -35,8 +39,12 @@ public sealed class TrayService : IDisposable
         _currentImeItem = new ToolStripMenuItem { Enabled = false };
         _hotkeyFailureItem = new ToolStripMenuItem("热键注册失败") { Enabled = false, Visible = hotkeyFailed };
         _toggleItem = new ToolStripMenuItem();
+        _showFloatingItem = new ToolStripMenuItem("显示悬浮窗");
+        _hideFloatingItem = new ToolStripMenuItem("隐藏悬浮窗");
 
         _toggleItem.Click += (_, _) => ToggleEnabledRequested?.Invoke();
+        _showFloatingItem.Click += (_, _) => ShowFloatingRequested?.Invoke();
+        _hideFloatingItem.Click += (_, _) => HideFloatingRequested?.Invoke();
         var switchChineseItem = new ToolStripMenuItem("切换到中文");
         switchChineseItem.Click += (_, _) => SwitchChineseRequested?.Invoke();
         var switchEnglishItem = new ToolStripMenuItem("切换到英文");
@@ -55,6 +63,8 @@ public sealed class TrayService : IDisposable
             _hotkeyFailureItem,
             new ToolStripSeparator(),
             _toggleItem,
+            _showFloatingItem,
+            _hideFloatingItem,
             switchChineseItem,
             switchEnglishItem,
             new ToolStripSeparator(),

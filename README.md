@@ -13,6 +13,14 @@ dotnet run --project .\src\BS.IME.Assistant\BS.IME.Assistant.csproj
 
 启动后程序不会弹出主窗口，会常驻系统托盘。右键托盘图标可以暂停自动切换、手动切换中英文、打开配置文件、打开日志目录或退出。
 
+程序会显示一个独立悬浮状态胶囊，用于实时提示当前输入法状态：
+
+- `中文输入`
+- `英文输入`
+- `输入法未知`
+
+悬浮胶囊可以拖动，拖动后会自动保存位置，下次启动会恢复到上次位置。托盘菜单中可以显示或隐藏悬浮窗。
+
 ## 配置文件
 
 配置文件位置：
@@ -22,6 +30,19 @@ dotnet run --project .\src\BS.IME.Assistant\BS.IME.Assistant.csproj
 ```
 
 如果文件不存在，程序会自动创建默认配置。如果 `targetChineseHkl` 或 `targetEnglishHkl` 为空，程序会根据系统当前可用键盘布局自动选择一个合理默认值，并写回配置文件。
+
+悬浮状态胶囊配置会保存在同一个配置文件中：
+
+```json
+"floatingStatus": {
+  "enabled": true,
+  "left": 1400,
+  "top": 120,
+  "width": 200,
+  "height": 48,
+  "topmost": true
+}
+```
 
 ## 日志
 

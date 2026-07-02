@@ -143,6 +143,27 @@ public sealed class SettingsService
             }
         }
 
+        if (settings.FloatingStatus is null)
+        {
+            settings.FloatingStatus = new FloatingStatusSettings();
+            changed = true;
+            _logger.Warn("Floating status settings were missing; restored defaults.");
+        }
+        else
+        {
+            if (settings.FloatingStatus.Width < 120 || settings.FloatingStatus.Width > 360)
+            {
+                settings.FloatingStatus.Width = 200;
+                changed = true;
+            }
+
+            if (settings.FloatingStatus.Height < 36 || settings.FloatingStatus.Height > 90)
+            {
+                settings.FloatingStatus.Height = 48;
+                changed = true;
+            }
+        }
+
         if (!string.IsNullOrWhiteSpace(settings.TargetEnglishHkl) && !ImeService.TryParseHkl(settings.TargetEnglishHkl, out _))
         {
             settings.TargetEnglishHkl = "";
