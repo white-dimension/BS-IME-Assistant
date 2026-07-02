@@ -10,6 +10,7 @@ public sealed class AppSettings
     public List<AppProfile> Profiles { get; set; } = CreateDefaultProfiles();
     public HotkeySettings Hotkeys { get; set; } = new();
     public FloatingStatusSettings FloatingStatus { get; set; } = new();
+    public CadIntegrationSettings CadIntegration { get; set; } = new();
 
     public static AppSettings CreateDefault() => new()
     {
@@ -19,7 +20,8 @@ public sealed class AppSettings
         TargetEnglishHkl = "",
         Profiles = CreateDefaultProfiles(),
         Hotkeys = new HotkeySettings(),
-        FloatingStatus = new FloatingStatusSettings()
+        FloatingStatus = new FloatingStatusSettings(),
+        CadIntegration = new CadIntegrationSettings()
     };
 
     public static List<AppProfile> CreateDefaultProfiles() =>

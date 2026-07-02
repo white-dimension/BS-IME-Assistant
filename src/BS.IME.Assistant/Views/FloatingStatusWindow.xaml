@@ -20,33 +20,66 @@
             SnapsToDevicePixels="True"
             MouseLeftButtonDown="Capsule_MouseLeftButtonDown">
         <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="52"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-            <Border x:Name="Badge"
-                    Width="34"
-                    Height="34"
-                    CornerRadius="17"
-                    Background="#33FFFFFF"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center">
-                <TextBlock x:Name="BadgeText"
-                           Text="EN"
+            <Grid x:Name="StatusPanel">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="52"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Border x:Name="Badge"
+                        Width="34"
+                        Height="34"
+                        CornerRadius="17"
+                        Background="#33FFFFFF"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+                    <TextBlock x:Name="BadgeText"
+                               Text="EN"
+                               Foreground="White"
+                               FontSize="13"
+                               FontWeight="Bold"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"/>
+                </Border>
+                <TextBlock x:Name="StatusText"
+                           Grid.Column="1"
+                           Text="英文输入"
                            Foreground="White"
-                           FontSize="13"
-                           FontWeight="Bold"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center"/>
-            </Border>
-            <TextBlock x:Name="StatusText"
-                       Grid.Column="1"
-                       Text="英文输入"
-                       Foreground="White"
-                       FontSize="17"
-                       FontWeight="SemiBold"
-                       VerticalAlignment="Center"
-                       TextTrimming="CharacterEllipsis"/>
+                           FontSize="17"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis"/>
+            </Grid>
+            <Grid x:Name="PromptPanel" Visibility="Collapsed" Margin="10,7">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock x:Name="PromptTitle"
+                               Text="检测到 AutoCAD"
+                               Foreground="White"
+                               FontSize="14"
+                               FontWeight="SemiBold"
+                               TextTrimming="CharacterEllipsis"/>
+                    <TextBlock x:Name="PromptSubtitle"
+                               Text="启用 CAD 输入识别？"
+                               Foreground="#DDE7F0"
+                               FontSize="11"
+                               TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
+                <Button Grid.Column="1"
+                        Content="启用"
+                        Width="48"
+                        Height="26"
+                        Margin="8,0,4,0"
+                        Click="EnablePrompt_Click"/>
+                <Button Grid.Column="2"
+                        Content="暂不"
+                        Width="48"
+                        Height="26"
+                        Click="DismissPrompt_Click"/>
+            </Grid>
         </Grid>
     </Border>
 </Window>

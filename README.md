@@ -21,6 +21,8 @@ dotnet run --project .\src\BS.IME.Assistant\BS.IME.Assistant.csproj
 
 悬浮胶囊可以拖动，拖动后会自动保存位置，下次启动会恢复到上次位置。托盘菜单中可以显示或隐藏悬浮窗。
 
+当检测到 AutoCAD 时，悬浮胶囊会提示是否启用 CAD 输入识别。启用后，已加载的 `BS-CAD-Tools` 插件可以把 CAD 文字编辑状态发送给本程序，由本程序统一切换中文 / 英文输入法。
+
 ## 配置文件
 
 配置文件位置：
@@ -41,6 +43,15 @@ dotnet run --project .\src\BS.IME.Assistant\BS.IME.Assistant.csproj
   "width": 200,
   "height": 48,
   "topmost": true
+}
+```
+
+CAD 增强识别配置：
+
+```json
+"cadIntegration": {
+  "enabled": false,
+  "promptOnDetect": true
 }
 ```
 

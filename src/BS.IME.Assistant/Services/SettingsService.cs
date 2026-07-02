@@ -164,6 +164,13 @@ public sealed class SettingsService
             }
         }
 
+        if (settings.CadIntegration is null)
+        {
+            settings.CadIntegration = new CadIntegrationSettings();
+            changed = true;
+            _logger.Warn("CAD integration settings were missing; restored defaults.");
+        }
+
         if (!string.IsNullOrWhiteSpace(settings.TargetEnglishHkl) && !ImeService.TryParseHkl(settings.TargetEnglishHkl, out _))
         {
             settings.TargetEnglishHkl = "";

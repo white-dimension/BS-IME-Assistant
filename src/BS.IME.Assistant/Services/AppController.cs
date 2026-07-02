@@ -13,12 +13,17 @@ public sealed class AppController : IDisposable
     private readonly HotkeyService _hotkeyService;
     private readonly TrayService _trayService;
     private readonly FloatingStatusService _floatingStatusService;
+    private readonly PipeCommandService _pipeCommandService;
     private readonly DispatcherTimer _timer;
     private AppSettings _settings;
     private ActiveWindowInfo? _lastWindow;
     private nint _lastSwitchWindowHandle;
     private string _lastSwitchTarget = "";
     private DateTimeOffset _lastSwitchAttemptAt = DateTimeOffset.MinValue;
+    private string _cadPreferredIme = "";
+    private string _cadMode = "";
+    private bool _cadPluginConnected;
+    private bool _cadPromptDismissedThisSession;
     private bool _disposed;
 
     public AppController(MainWindow window)
@@ -32,6 +37,7 @@ public sealed class AppController : IDisposable
         _hotkeyService = new HotkeyService(_logger);
         _trayService = new TrayService(_logger);
         _floatingStatusService = new FloatingStatusService(_logger, _settingsService);
+        _pipeCommandService = new PipeCommandService(_logger);
         _settings = AppSettings.CreateDefault();
         _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
         _timer.Tick += (_, _) => Tick();
@@ -47,9 +53,13 @@ public sealed class AppController : IDisposable
         _imeService.EnsureTargets(_settings, languages, _settingsService);
         _window.UpdateInfo(_settings.Enabled, _settings.TargetChineseHkl, _settings.TargetEnglishHkl, _settingsService.SettingsPath, _logger.LogPath);
         _floatingStatusService.Initialize(_settings);
+        _floatingStatusService.CadPromptAccepted += EnableCadIntegration;
+        _floatingStatusService.CadPromptDismissed += () => _cadPromptDismissedThisSession = true;
 
         _hotkeyService.HotkeyPressed += kind => ManualSwitch(kind, "hotkey");
         _hotkeyService.Register(windowHandle, _settings.Hotkeys.SwitchEnglish, _settings.Hotkeys.SwitchChinese);
+        _pipeCommandService.CommandReceived += OnPipeCommandReceived;
+        _pipeCommandService.Start();
 
         _trayService.ToggleEnabledRequested += ToggleEnabled;
         _trayService.ShowFloatingRequested += _floatingStatusService.Show;
@@ -75,6 +85,7 @@ public sealed class AppController : IDisposable
         try
         {
             _timer.Stop();
+            _pipeCommandService.Dispose();
             _hotkeyService.Dispose();
             _floatingStatusService.Dispose();
             _trayService.Dispose();
@@ -95,7 +106,7 @@ public sealed class AppController : IDisposable
             var window = _activeWindowService.GetForegroundWindowInfo();
             var currentIme = window is null ? "未知" : _imeService.GetCurrentImeKind(window.ThreadId, _settings);
             _trayService.Update(_settings.Enabled, window?.ProcessName ?? "", currentIme, _hotkeyService.HasRegistrationFailure);
-            _floatingStatusService.Update(currentIme);
+            UpdateFloatingStatus(window, currentIme);
 
             if (window is null)
             {
@@ -110,6 +121,11 @@ public sealed class AppController : IDisposable
             }
 
             if (!_settings.Enabled)
+            {
+                return;
+            }
+
+            if (TryApplyCadPluginRequest(window))
             {
                 return;
             }
@@ -176,8 +192,115 @@ public sealed class AppController : IDisposable
         _logger.Info(_settings.Enabled ? "Auto switch enabled." : "Auto switch paused.");
     }
 
+    private void OnPipeCommandReceived(Models.PipeImeCommand command)
+    {
+        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+        {
+            if (!command.Source.Equals("AutoCAD", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            _cadPluginConnected = !command.Event.Equals("PluginDisconnected", StringComparison.OrdinalIgnoreCase);
+
+            if (command.Event.Equals("PluginReady", StringComparison.OrdinalIgnoreCase))
+            {
+                _cadMode = "CAD 插件已连接";
+                if (!_settings.CadIntegration.Enabled)
+                {
+                    _floatingStatusService.ShowCadPrompt();
+                }
+                return;
+            }
+
+            if (!_settings.CadIntegration.Enabled)
+            {
+                _floatingStatusService.ShowCadPrompt();
+                _logger.Info("CAD plugin command ignored because CAD integration is not enabled.");
+                return;
+            }
+
+            _cadMode = string.IsNullOrWhiteSpace(command.Mode) ? command.Event : command.Mode;
+            _cadPreferredIme = command.PreferredIme.Equals("zh", StringComparison.OrdinalIgnoreCase) ? "zh" : "en";
+
+            var window = _activeWindowService.GetForegroundWindowInfo();
+            if (window is not null && IsAutoCad(window.ProcessName))
+            {
+                _imeService.SwitchTo(_cadPreferredIme, window.Handle, _settings, $"cad-plugin:{command.Event}");
+                RecordSwitchAttempt(window.Handle, _cadPreferredIme);
+            }
+        });
+    }
+
+    private bool TryApplyCadPluginRequest(ActiveWindowInfo window)
+    {
+        if (!_settings.CadIntegration.Enabled || !_cadPluginConnected || string.IsNullOrWhiteSpace(_cadPreferredIme) || !IsAutoCad(window.ProcessName))
+        {
+            return false;
+        }
+
+        var targetHkl = _cadPreferredIme == "zh" ? _settings.TargetChineseHkl : _settings.TargetEnglishHkl;
+        if (ImeService.HklEquals(targetHkl, GetCurrentHkl(window.ThreadId)))
+        {
+            ResetSwitchAttempt();
+            return true;
+        }
+
+        if (!CanRetrySwitch(window.Handle, _cadPreferredIme))
+        {
+            return true;
+        }
+
+        if (_imeService.SwitchTo(_cadPreferredIme, window.Handle, _settings, $"cad-plugin:{_cadMode}"))
+        {
+            RecordSwitchAttempt(window.Handle, _cadPreferredIme);
+        }
+
+        return true;
+    }
+
+    private void EnableCadIntegration()
+    {
+        _settings.CadIntegration.Enabled = true;
+        _settingsService.Save(_settings);
+        _cadPromptDismissedThisSession = false;
+        _floatingStatusService.UpdateCustom("CAD", _cadPluginConnected ? "CAD 增强已启用" : "等待 CAD 插件", "#CC155E75");
+        _logger.Info("CAD integration enabled by user.");
+    }
+
+    private void UpdateFloatingStatus(ActiveWindowInfo? window, string currentIme)
+    {
+        if (window is not null && IsAutoCad(window.ProcessName))
+        {
+            if (!_settings.CadIntegration.Enabled && _settings.CadIntegration.PromptOnDetect && !_cadPromptDismissedThisSession)
+            {
+                _floatingStatusService.ShowCadPrompt();
+                return;
+            }
+
+            if (_settings.CadIntegration.Enabled && _cadPluginConnected)
+            {
+                var label = string.IsNullOrWhiteSpace(_cadMode) ? "CAD 增强已连接" : _cadMode;
+                var imeText = currentIme == "中文" ? "中文输入" : currentIme == "英文" ? "英文输入" : "输入法未知";
+                _floatingStatusService.UpdateCustom("CAD", $"{label} · {imeText}", "#CC155E75");
+                return;
+            }
+
+            if (_settings.CadIntegration.Enabled)
+            {
+                _floatingStatusService.UpdateCustom("CAD", "等待 CAD 插件", "#CC374151");
+                return;
+            }
+        }
+
+        _floatingStatusService.Update(currentIme);
+    }
+
     private static string NormalizeProcessName(string processName) =>
         processName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? processName : $"{processName}.exe";
+
+    private static bool IsAutoCad(string processName) =>
+        string.Equals(NormalizeProcessName(processName), "acad.exe", StringComparison.OrdinalIgnoreCase);
 
     private bool CanRetrySwitch(nint windowHandle, string target)
     {

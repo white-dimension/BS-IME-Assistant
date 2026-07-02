@@ -19,9 +19,14 @@ public partial class FloatingStatusWindow : Window
     }
 
     public event Action<double, double>? PositionChangedByUser;
+    public event Action? PromptAccepted;
+    public event Action? PromptDismissed;
 
     public void UpdateStatus(string currentIme)
     {
+        StatusPanel.Visibility = Visibility.Visible;
+        PromptPanel.Visibility = Visibility.Collapsed;
+
         if (currentIme == "中文")
         {
             BadgeText.Text = "中";
@@ -41,6 +46,22 @@ public partial class FloatingStatusWindow : Window
         BadgeText.Text = "?";
         StatusText.Text = "输入法未知";
         Capsule.Background = BrushFrom("#CC374151");
+    }
+
+    public void UpdateCustomStatus(string badge, string text, string color)
+    {
+        StatusPanel.Visibility = Visibility.Visible;
+        PromptPanel.Visibility = Visibility.Collapsed;
+        BadgeText.Text = badge;
+        StatusText.Text = text;
+        Capsule.Background = BrushFrom(color);
+    }
+
+    public void ShowCadPrompt()
+    {
+        StatusPanel.Visibility = Visibility.Collapsed;
+        PromptPanel.Visibility = Visibility.Visible;
+        Capsule.Background = BrushFrom("#CC155E75");
     }
 
     public void ClampToScreen()
@@ -71,6 +92,16 @@ public partial class FloatingStatusWindow : Window
         {
             // DragMove can throw if the mouse state changes during a drag.
         }
+    }
+
+    private void EnablePrompt_Click(object sender, RoutedEventArgs e)
+    {
+        PromptAccepted?.Invoke();
+    }
+
+    private void DismissPrompt_Click(object sender, RoutedEventArgs e)
+    {
+        PromptDismissed?.Invoke();
     }
 
     private void ApplyNoActivateStyle()

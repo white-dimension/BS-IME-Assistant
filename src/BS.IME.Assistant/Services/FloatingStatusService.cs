@@ -17,6 +17,9 @@ public sealed class FloatingStatusService : IDisposable
         _settingsService = settingsService;
     }
 
+    public event Action? CadPromptAccepted;
+    public event Action? CadPromptDismissed;
+
     public void Initialize(AppSettings settings)
     {
         _settings = settings;
@@ -40,7 +43,39 @@ public sealed class FloatingStatusService : IDisposable
         }
 
         EnsureWindow();
+        RestoreConfiguredSize();
         _window?.UpdateStatus(currentIme);
+    }
+
+    public void UpdateCustom(string badge, string text, string color)
+    {
+        if (_settings?.FloatingStatus.Enabled != true)
+        {
+            return;
+        }
+
+        EnsureWindow();
+        RestoreConfiguredSize();
+        _window?.UpdateCustomStatus(badge, text, color);
+    }
+
+    public void ShowCadPrompt()
+    {
+        if (_settings?.FloatingStatus.Enabled != true)
+        {
+            return;
+        }
+
+        EnsureWindow();
+        if (_window is null)
+        {
+            return;
+        }
+
+        _window.Width = Math.Max(_settings.FloatingStatus.Width, 260);
+        _window.Height = Math.Max(_settings.FloatingStatus.Height, 64);
+        _window.ClampToScreen();
+        _window.ShowCadPrompt();
     }
 
     public void Show()
@@ -108,6 +143,8 @@ public sealed class FloatingStatusService : IDisposable
             Topmost = floating.Topmost
         };
         _window.ClampToScreen();
+        _window.PromptAccepted += () => CadPromptAccepted?.Invoke();
+        _window.PromptDismissed += () => CadPromptDismissed?.Invoke();
         _window.PositionChangedByUser += (left, top) =>
         {
             if (_settings is null)
@@ -120,5 +157,17 @@ public sealed class FloatingStatusService : IDisposable
             _settingsService.Save(_settings);
             _logger.Info($"Floating status position saved: left={left}, top={top}");
         };
+    }
+
+    private void RestoreConfiguredSize()
+    {
+        if (_settings is null || _window is null)
+        {
+            return;
+        }
+
+        _window.Width = _settings.FloatingStatus.Width;
+        _window.Height = _settings.FloatingStatus.Height;
+        _window.ClampToScreen();
     }
 }
