@@ -15,7 +15,9 @@ public sealed class AppController : IDisposable
     private readonly DispatcherTimer _timer;
     private AppSettings _settings;
     private ActiveWindowInfo? _lastWindow;
-    private string _lastRequestedIme = "";
+    private nint _lastSwitchWindowHandle;
+    private string _lastSwitchTarget = "";
+    private DateTimeOffset _lastSwitchAttemptAt = DateTimeOffset.MinValue;
     private bool _disposed;
 
     public AppController(MainWindow window)
@@ -97,7 +99,7 @@ public sealed class AppController : IDisposable
             {
                 _logger.Info($"Active window changed: {window.ProcessName}, pid={window.ProcessId}, title={window.Title}");
                 _lastWindow = window;
-                _lastRequestedIme = "";
+                ResetSwitchAttempt();
             }
 
             if (!_settings.Enabled)
@@ -116,14 +118,20 @@ public sealed class AppController : IDisposable
 
             var target = profile.DefaultIme.Equals("zh", StringComparison.OrdinalIgnoreCase) ? "zh" : "en";
             var targetHkl = target == "zh" ? _settings.TargetChineseHkl : _settings.TargetEnglishHkl;
-            if (ImeService.HklEquals(targetHkl, GetCurrentHkl(window.ThreadId)) || string.Equals(_lastRequestedIme, target, StringComparison.OrdinalIgnoreCase))
+            if (ImeService.HklEquals(targetHkl, GetCurrentHkl(window.ThreadId)))
+            {
+                ResetSwitchAttempt();
+                return;
+            }
+
+            if (!CanRetrySwitch(window.Handle, target))
             {
                 return;
             }
 
             if (_imeService.SwitchTo(target, window.Handle, _settings, $"auto:{profile.Name}"))
             {
-                _lastRequestedIme = target;
+                RecordSwitchAttempt(window.Handle, target);
             }
         }
         catch (Exception ex)
@@ -145,7 +153,7 @@ public sealed class AppController : IDisposable
 
             _logger.Info($"Manual IME switch requested: {kind}, source={source}");
             _imeService.SwitchTo(kind, window.Handle, _settings, $"manual:{source}");
-            _lastRequestedIme = kind;
+            RecordSwitchAttempt(window.Handle, kind);
         }
         catch (Exception ex)
         {
@@ -163,6 +171,30 @@ public sealed class AppController : IDisposable
 
     private static string NormalizeProcessName(string processName) =>
         processName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? processName : $"{processName}.exe";
+
+    private bool CanRetrySwitch(nint windowHandle, string target)
+    {
+        if (_lastSwitchWindowHandle != windowHandle || !string.Equals(_lastSwitchTarget, target, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return DateTimeOffset.Now - _lastSwitchAttemptAt >= TimeSpan.FromSeconds(1);
+    }
+
+    private void RecordSwitchAttempt(nint windowHandle, string target)
+    {
+        _lastSwitchWindowHandle = windowHandle;
+        _lastSwitchTarget = target;
+        _lastSwitchAttemptAt = DateTimeOffset.Now;
+    }
+
+    private void ResetSwitchAttempt()
+    {
+        _lastSwitchWindowHandle = nint.Zero;
+        _lastSwitchTarget = "";
+        _lastSwitchAttemptAt = DateTimeOffset.MinValue;
+    }
 
     private string GetCurrentHkl(uint threadId)
     {

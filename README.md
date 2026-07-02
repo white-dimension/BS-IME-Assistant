@@ -67,5 +67,6 @@ dotnet run --project .\src\BS.IME.Assistant\BS.IME.Assistant.csproj
 - 不接 BS OS。
 - 不接 AutoCAD API。
 - 不接 3ds Max SDK。
+- `startWithWindows` 当前是预留配置项，暂未注册开机启动。
 - 输入法检测基于 Windows 当前可用键盘布局，部分第三方输入法的 HKL/描述可能因系统环境不同而不同。
 - 自动切换通过向当前前台窗口发送 `WM_INPUTLANGCHANGEREQUEST`，少数高权限窗口或特殊程序可能拒绝处理。
