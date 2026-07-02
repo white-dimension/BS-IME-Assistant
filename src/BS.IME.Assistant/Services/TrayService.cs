@@ -76,7 +76,7 @@ public sealed class TrayService : IDisposable
 
         _notifyIcon = new NotifyIcon
         {
-            Icon = SystemIcons.Application,
+            Icon = LoadTrayIcon(),
             Text = "BS IME Assistant",
             Visible = true,
             ContextMenuStrip = menu
@@ -114,6 +114,24 @@ public sealed class TrayService : IDisposable
         {
             logger.Error($"Failed to open path: {path}", ex);
         }
+    }
+
+    private Icon LoadTrayIcon()
+    {
+        try
+        {
+            var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "app.ico");
+            if (File.Exists(iconPath))
+            {
+                return new Icon(iconPath);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Warn($"Failed to load tray icon: {ex.Message}");
+        }
+
+        return SystemIcons.Application;
     }
 
     public void Dispose()
