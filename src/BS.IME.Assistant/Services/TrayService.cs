@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
 namespace BS.IME.Assistant.Services;
@@ -16,6 +17,7 @@ public sealed class TrayService : IDisposable
     private ToolStripMenuItem? _hideFloatingItem;
     private ToolStripMenuItem? _hotkeyFailureItem;
     private bool _disposed;
+    private readonly Font _menuFont = new("Microsoft YaHei UI", 10.5f, FontStyle.Regular);
 
     public TrayService(Logger logger)
     {
@@ -34,6 +36,7 @@ public sealed class TrayService : IDisposable
     public void Initialize(bool enabled, bool hotkeyFailed)
     {
         var menu = new ContextMenuStrip();
+        ConfigureMenu(menu);
         _statusItem = new ToolStripMenuItem { Enabled = false };
         _foregroundItem = new ToolStripMenuItem { Enabled = false };
         _currentImeItem = new ToolStripMenuItem { Enabled = false };
@@ -73,6 +76,7 @@ public sealed class TrayService : IDisposable
             new ToolStripSeparator(),
             exitItem
         ]);
+        StyleMenuItems(menu.Items);
 
         _notifyIcon = new NotifyIcon
         {
@@ -134,6 +138,79 @@ public sealed class TrayService : IDisposable
         return SystemIcons.Application;
     }
 
+    private static void ConfigureMenu(ContextMenuStrip menu)
+    {
+        menu.RenderMode = ToolStripRenderMode.Professional;
+        menu.Renderer = new DarkMenuRenderer();
+        menu.BackColor = DarkMenuRenderer.Background;
+        menu.ForeColor = Color.White;
+        menu.ShowImageMargin = true;
+        menu.ShowCheckMargin = true;
+        menu.Padding = new Padding(8, 8, 8, 8);
+        menu.Margin = Padding.Empty;
+        menu.Opened += (_, _) => ApplyRoundedRegion(menu, 8);
+        menu.Closed += (_, _) =>
+        {
+            var region = menu.Region;
+            menu.Region = null;
+            region?.Dispose();
+        };
+    }
+
+    private void StyleMenuItems(ToolStripItemCollection items)
+    {
+        foreach (ToolStripItem item in items)
+        {
+            item.Font = _menuFont;
+            item.ForeColor = item.Enabled ? Color.White : Color.FromArgb(185, 185, 185);
+
+            if (item is ToolStripMenuItem menuItem)
+            {
+                menuItem.AutoSize = false;
+                menuItem.Height = 34;
+                menuItem.Width = 248;
+                menuItem.Padding = new Padding(12, 0, 12, 0);
+            }
+
+            if (item is ToolStripSeparator separator)
+            {
+                separator.AutoSize = false;
+                separator.Height = 10;
+                separator.Margin = new Padding(4, 3, 4, 3);
+            }
+        }
+    }
+
+    private static void ApplyRoundedRegion(ContextMenuStrip menu, int radius)
+    {
+        if (menu.Width <= 0 || menu.Height <= 0)
+        {
+            return;
+        }
+
+        menu.Region?.Dispose();
+        using var path = CreateRoundRectanglePath(new Rectangle(0, 0, menu.Width, menu.Height), radius);
+        menu.Region = new Region(path);
+    }
+
+    private static GraphicsPath CreateRoundRectanglePath(Rectangle bounds, int radius)
+    {
+        var path = new GraphicsPath();
+        int diameter = radius * 2;
+        var arc = new Rectangle(bounds.Location, new Size(diameter, diameter));
+
+        path.AddArc(arc, 180, 90);
+        arc.X = bounds.Right - diameter - 1;
+        path.AddArc(arc, 270, 90);
+        arc.Y = bounds.Bottom - diameter - 1;
+        path.AddArc(arc, 0, 90);
+        arc.X = bounds.Left;
+        path.AddArc(arc, 90, 90);
+        path.CloseFigure();
+
+        return path;
+    }
+
     public void Dispose()
     {
         if (_disposed)
@@ -149,6 +226,8 @@ public sealed class TrayService : IDisposable
                 _notifyIcon.Dispose();
             }
 
+            _menuFont.Dispose();
+
             _logger.Info("Tray icon disposed.");
         }
         catch (Exception ex)
@@ -157,5 +236,92 @@ public sealed class TrayService : IDisposable
         }
 
         _disposed = true;
+    }
+
+    private sealed class DarkMenuRenderer : ToolStripProfessionalRenderer
+    {
+        public static readonly Color Background = Color.FromArgb(38, 38, 38);
+        private static readonly Color Border = Color.FromArgb(72, 72, 72);
+        private static readonly Color Separator = Color.FromArgb(58, 58, 58);
+        private static readonly Color Hover = Color.FromArgb(54, 54, 54);
+        private static readonly Color Pressed = Color.FromArgb(62, 62, 62);
+        private static readonly Color Text = Color.White;
+        private static readonly Color DisabledText = Color.FromArgb(178, 178, 178);
+
+        public DarkMenuRenderer() : base(new DarkColorTable())
+        {
+            RoundedEdges = true;
+        }
+
+        protected override void OnRenderToolStripBackground(ToolStripRenderEventArgs e)
+        {
+            using var brush = new SolidBrush(Background);
+            e.Graphics.FillRectangle(brush, e.AffectedBounds);
+        }
+
+        protected override void OnRenderToolStripBorder(ToolStripRenderEventArgs e)
+        {
+            using var pen = new Pen(Border);
+            var rect = new Rectangle(0, 0, e.ToolStrip.Width - 1, e.ToolStrip.Height - 1);
+            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            using var path = CreateRoundRectanglePath(rect, 8);
+            e.Graphics.DrawPath(pen, path);
+        }
+
+        protected override void OnRenderMenuItemBackground(ToolStripItemRenderEventArgs e)
+        {
+            if (e.Item is not ToolStripMenuItem item)
+            {
+                return;
+            }
+
+            Color color = item.Pressed ? Pressed : item.Selected ? Hover : Background;
+            using var brush = new SolidBrush(color);
+            var rect = new Rectangle(5, 2, item.Width - 10, item.Height - 4);
+            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            using var path = CreateRoundRectanglePath(rect, 5);
+            e.Graphics.FillPath(brush, path);
+        }
+
+        protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e)
+        {
+            e.TextColor = e.Item.Enabled ? Text : DisabledText;
+            e.TextFormat |= TextFormatFlags.VerticalCenter;
+            base.OnRenderItemText(e);
+        }
+
+        protected override void OnRenderSeparator(ToolStripSeparatorRenderEventArgs e)
+        {
+            using var pen = new Pen(Separator);
+            int y = e.Item.Height / 2;
+            e.Graphics.DrawLine(pen, 12, y, e.Item.Width - 12, y);
+        }
+
+        protected override void OnRenderItemCheck(ToolStripItemImageRenderEventArgs e)
+        {
+            TextRenderer.DrawText(e.Graphics, "✓", e.Item.Font, e.ImageRectangle, Text, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+        }
+
+        protected override void OnRenderArrow(ToolStripArrowRenderEventArgs e)
+        {
+            e.ArrowColor = Text;
+            base.OnRenderArrow(e);
+        }
+    }
+
+    private sealed class DarkColorTable : ProfessionalColorTable
+    {
+        public override Color MenuItemSelected => Color.FromArgb(54, 54, 54);
+        public override Color MenuItemSelectedGradientBegin => MenuItemSelected;
+        public override Color MenuItemSelectedGradientEnd => MenuItemSelected;
+        public override Color MenuItemPressedGradientBegin => Color.FromArgb(62, 62, 62);
+        public override Color MenuItemPressedGradientEnd => Color.FromArgb(62, 62, 62);
+        public override Color ToolStripDropDownBackground => DarkMenuRenderer.Background;
+        public override Color ImageMarginGradientBegin => DarkMenuRenderer.Background;
+        public override Color ImageMarginGradientMiddle => DarkMenuRenderer.Background;
+        public override Color ImageMarginGradientEnd => DarkMenuRenderer.Background;
+        public override Color MenuBorder => Color.FromArgb(72, 72, 72);
+        public override Color SeparatorDark => Color.FromArgb(58, 58, 58);
+        public override Color SeparatorLight => Color.FromArgb(58, 58, 58);
     }
 }
