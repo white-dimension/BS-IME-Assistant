@@ -24,6 +24,9 @@ public sealed class AppController : IDisposable
     private string _cadMode = "";
     private bool _cadPluginConnected;
     private bool _cadPromptDismissedThisSession;
+    private string _maxPreferredIme = "";
+    private string _maxMode = "";
+    private bool _maxPluginConnected;
     private bool _disposed;
 
     public AppController(MainWindow window)
@@ -130,6 +133,11 @@ public sealed class AppController : IDisposable
                 return;
             }
 
+            if (TryApplyMaxPluginRequest(window))
+            {
+                return;
+            }
+
             var profile = _settings.Profiles.FirstOrDefault(x =>
                 x.SwitchOnActivate &&
                 string.Equals(NormalizeProcessName(x.ProcessName), NormalizeProcessName(window.ProcessName), StringComparison.OrdinalIgnoreCase));
@@ -196,40 +204,81 @@ public sealed class AppController : IDisposable
     {
         System.Windows.Application.Current.Dispatcher.Invoke(() =>
         {
-            if (!command.Source.Equals("AutoCAD", StringComparison.OrdinalIgnoreCase))
+            if (command.Source.Equals("AutoCAD", StringComparison.OrdinalIgnoreCase))
             {
+                HandleCadPipeCommand(command);
                 return;
             }
 
-            _cadPluginConnected = !command.Event.Equals("PluginDisconnected", StringComparison.OrdinalIgnoreCase);
-
-            if (command.Event.Equals("PluginReady", StringComparison.OrdinalIgnoreCase))
+            if (command.Source.Equals("3dsMax", StringComparison.OrdinalIgnoreCase) ||
+                command.Source.Equals("3ds Max", StringComparison.OrdinalIgnoreCase))
             {
-                _cadMode = "CAD 插件已连接";
-                if (!_settings.CadIntegration.Enabled)
-                {
-                    _floatingStatusService.ShowCadPrompt();
-                }
-                return;
+                HandleMaxPipeCommand(command);
             }
+        });
+    }
 
+    private void HandleCadPipeCommand(Models.PipeImeCommand command)
+    {
+        _cadPluginConnected = !command.Event.Equals("PluginDisconnected", StringComparison.OrdinalIgnoreCase);
+
+        if (command.Event.Equals("PluginReady", StringComparison.OrdinalIgnoreCase))
+        {
+            _cadMode = "CAD 插件已连接";
             if (!_settings.CadIntegration.Enabled)
             {
                 _floatingStatusService.ShowCadPrompt();
-                _logger.Info("CAD plugin command ignored because CAD integration is not enabled.");
-                return;
             }
+            return;
+        }
 
-            _cadMode = string.IsNullOrWhiteSpace(command.Mode) ? command.Event : command.Mode;
-            _cadPreferredIme = command.PreferredIme.Equals("zh", StringComparison.OrdinalIgnoreCase) ? "zh" : "en";
+        if (!_settings.CadIntegration.Enabled)
+        {
+            _floatingStatusService.ShowCadPrompt();
+            _logger.Info("CAD plugin command ignored because CAD integration is not enabled.");
+            return;
+        }
 
-            var window = _activeWindowService.GetForegroundWindowInfo();
-            if (window is not null && IsAutoCad(window.ProcessName))
-            {
-                _imeService.SwitchTo(_cadPreferredIme, window.Handle, _settings, $"cad-plugin:{command.Event}");
-                RecordSwitchAttempt(window.Handle, _cadPreferredIme);
-            }
-        });
+        _cadMode = string.IsNullOrWhiteSpace(command.Mode) ? command.Event : command.Mode;
+        _cadPreferredIme = command.PreferredIme.Equals("zh", StringComparison.OrdinalIgnoreCase) ? "zh" : "en";
+
+        var window = _activeWindowService.GetForegroundWindowInfo();
+        if (window is not null && IsAutoCad(window.ProcessName))
+        {
+            _imeService.SwitchTo(_cadPreferredIme, window.Handle, _settings, $"cad-plugin:{command.Event}");
+            RecordSwitchAttempt(window.Handle, _cadPreferredIme);
+        }
+    }
+
+    private void HandleMaxPipeCommand(Models.PipeImeCommand command)
+    {
+        _maxPluginConnected = !command.Event.Equals("PluginDisconnected", StringComparison.OrdinalIgnoreCase);
+
+        if (command.Event.Equals("PluginReady", StringComparison.OrdinalIgnoreCase))
+        {
+            _maxMode = "3ds Max 插件已连接";
+            _maxPreferredIme = "en";
+            _floatingStatusService.UpdateCustom("MAX", "3ds Max 插件已连接", "#CC4338CA");
+            return;
+        }
+
+        if (command.Event.Equals("PluginDisconnected", StringComparison.OrdinalIgnoreCase))
+        {
+            _maxMode = "3ds Max 插件已断开";
+            _maxPreferredIme = "";
+            _floatingStatusService.UpdateCustom("MAX", "3ds Max 插件已断开", "#CC374151");
+            return;
+        }
+
+        _maxMode = string.IsNullOrWhiteSpace(command.Mode) ? command.Event : command.Mode;
+        _maxPreferredIme = command.PreferredIme.Equals("zh", StringComparison.OrdinalIgnoreCase) ? "zh" : "en";
+
+        var window = _activeWindowService.GetForegroundWindowInfo();
+        if (window is not null && Is3dsMax(window.ProcessName))
+        {
+            _imeService.SwitchTo(_maxPreferredIme, window.Handle, _settings, $"3dsmax-plugin:{command.Event}");
+            RecordSwitchAttempt(window.Handle, _maxPreferredIme);
+        }
     }
 
     private bool TryApplyCadPluginRequest(ActiveWindowInfo window)
@@ -254,6 +303,33 @@ public sealed class AppController : IDisposable
         if (_imeService.SwitchTo(_cadPreferredIme, window.Handle, _settings, $"cad-plugin:{_cadMode}"))
         {
             RecordSwitchAttempt(window.Handle, _cadPreferredIme);
+        }
+
+        return true;
+    }
+
+    private bool TryApplyMaxPluginRequest(ActiveWindowInfo window)
+    {
+        if (!_maxPluginConnected || string.IsNullOrWhiteSpace(_maxPreferredIme) || !Is3dsMax(window.ProcessName))
+        {
+            return false;
+        }
+
+        var targetHkl = _maxPreferredIme == "zh" ? _settings.TargetChineseHkl : _settings.TargetEnglishHkl;
+        if (ImeService.HklEquals(targetHkl, GetCurrentHkl(window.ThreadId)))
+        {
+            ResetSwitchAttempt();
+            return true;
+        }
+
+        if (!CanRetrySwitch(window.Handle, _maxPreferredIme))
+        {
+            return true;
+        }
+
+        if (_imeService.SwitchTo(_maxPreferredIme, window.Handle, _settings, $"3dsmax-plugin:{_maxMode}"))
+        {
+            RecordSwitchAttempt(window.Handle, _maxPreferredIme);
         }
 
         return true;
@@ -293,6 +369,14 @@ public sealed class AppController : IDisposable
             }
         }
 
+        if (window is not null && Is3dsMax(window.ProcessName) && _maxPluginConnected)
+        {
+            var label = string.IsNullOrWhiteSpace(_maxMode) ? "3ds Max 插件已连接" : _maxMode;
+            var imeText = currentIme == "中文" ? "中文输入" : currentIme == "英文" ? "英文输入" : "输入法未知";
+            _floatingStatusService.UpdateCustom("MAX", $"{label} · {imeText}", "#CC4338CA");
+            return;
+        }
+
         _floatingStatusService.Update(currentIme);
     }
 
@@ -301,6 +385,9 @@ public sealed class AppController : IDisposable
 
     private static bool IsAutoCad(string processName) =>
         string.Equals(NormalizeProcessName(processName), "acad.exe", StringComparison.OrdinalIgnoreCase);
+
+    private static bool Is3dsMax(string processName) =>
+        string.Equals(NormalizeProcessName(processName), "3dsmax.exe", StringComparison.OrdinalIgnoreCase);
 
     private bool CanRetrySwitch(nint windowHandle, string target)
     {
