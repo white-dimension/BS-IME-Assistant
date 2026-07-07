@@ -153,13 +153,18 @@ public sealed class SettingsService
         {
             if (settings.FloatingStatus.Width < 120 || settings.FloatingStatus.Width > 360)
             {
-                settings.FloatingStatus.Width = 200;
+                settings.FloatingStatus.Width = 180;
                 changed = true;
             }
 
             if (settings.FloatingStatus.Height < 36 || settings.FloatingStatus.Height > 90)
             {
-                settings.FloatingStatus.Height = 48;
+                settings.FloatingStatus.Height = 40;
+                changed = true;
+            }
+            else if (Math.Abs(settings.FloatingStatus.Height - 48) < 0.1)
+            {
+                settings.FloatingStatus.Height = 40;
                 changed = true;
             }
         }

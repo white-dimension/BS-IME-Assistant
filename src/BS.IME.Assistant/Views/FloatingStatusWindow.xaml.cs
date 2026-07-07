@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using Forms = System.Windows.Forms;
 
 namespace BS.IME.Assistant.Views;
 
@@ -11,8 +12,10 @@ public partial class FloatingStatusWindow : Window
     private const int GwlExStyle = -20;
     private const int WsExToolWindow = 0x00000080;
     private const int WsExNoActivate = 0x08000000;
-    private const double MinCapsuleWidth = 150;
+    private const double MinCapsuleWidth = 132;
     private const double MaxCapsuleWidth = 420;
+    private const double IdleOpacity = 0.72;
+    private const double HoverOpacity = 0.96;
 
     public FloatingStatusWindow()
     {
@@ -33,7 +36,7 @@ public partial class FloatingStatusWindow : Window
         {
             BadgeText.Text = "中";
             StatusText.Text = "中文输入";
-            Capsule.Background = BrushFrom("#CCB45309");
+            Capsule.Background = BrushFrom("#99B45309");
             ResizeForText(StatusText.Text);
             return;
         }
@@ -42,14 +45,14 @@ public partial class FloatingStatusWindow : Window
         {
             BadgeText.Text = "EN";
             StatusText.Text = "英文输入";
-            Capsule.Background = BrushFrom("#CC1D4ED8");
+            Capsule.Background = BrushFrom("#991D4ED8");
             ResizeForText(StatusText.Text);
             return;
         }
 
         BadgeText.Text = "?";
         StatusText.Text = "输入法未知";
-        Capsule.Background = BrushFrom("#CC374151");
+        Capsule.Background = BrushFrom("#99374151");
         ResizeForText(StatusText.Text);
     }
 
@@ -78,6 +81,26 @@ public partial class FloatingStatusWindow : Window
         var minTop = SystemParameters.VirtualScreenTop;
         var maxLeft = minLeft + SystemParameters.VirtualScreenWidth - Width;
         var maxTop = minTop + SystemParameters.VirtualScreenHeight - Height;
+
+        try
+        {
+            var source = PresentationSource.FromVisual(this);
+            var toDevice = source?.CompositionTarget?.TransformToDevice ?? Matrix.Identity;
+            var fromDevice = source?.CompositionTarget?.TransformFromDevice ?? Matrix.Identity;
+            var center = toDevice.Transform(new System.Windows.Point(Left + Width / 2, Top + Height / 2));
+            var screen = Forms.Screen.FromPoint(new System.Drawing.Point((int)Math.Round(center.X), (int)Math.Round(center.Y)));
+            var workTopLeft = fromDevice.Transform(new System.Windows.Point(screen.WorkingArea.Left, screen.WorkingArea.Top));
+            var workBottomRight = fromDevice.Transform(new System.Windows.Point(screen.WorkingArea.Right, screen.WorkingArea.Bottom));
+
+            minLeft = workTopLeft.X;
+            minTop = workTopLeft.Y;
+            maxLeft = workBottomRight.X - Width;
+            maxTop = workBottomRight.Y - Height;
+        }
+        catch
+        {
+            // Fall back to the virtual desktop if screen work-area lookup fails.
+        }
 
         Left = Math.Clamp(Left, minLeft, Math.Max(minLeft, maxLeft));
         Top = Math.Clamp(Top, minTop, Math.Max(minTop, maxTop));
@@ -112,6 +135,16 @@ public partial class FloatingStatusWindow : Window
         PromptDismissed?.Invoke();
     }
 
+    private void Window_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        Opacity = HoverOpacity;
+    }
+
+    private void Window_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        Opacity = IdleOpacity;
+    }
+
     private void ApplyNoActivateStyle()
     {
         var handle = new WindowInteropHelper(this).Handle;
@@ -133,8 +166,8 @@ public partial class FloatingStatusWindow : Window
 
     private void ResizeForText(string text)
     {
-        var textWeight = text.Count(c => c > 127) * 18 + text.Count(c => c <= 127) * 9;
-        Width = Math.Clamp(76 + textWeight, MinCapsuleWidth, MaxCapsuleWidth);
+        var textWeight = text.Count(c => c > 127) * 15 + text.Count(c => c <= 127) * 8;
+        Width = Math.Clamp(66 + textWeight, MinCapsuleWidth, MaxCapsuleWidth);
         ClampToScreen();
     }
 

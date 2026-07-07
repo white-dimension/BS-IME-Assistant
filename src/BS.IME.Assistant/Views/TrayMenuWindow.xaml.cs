@@ -23,7 +23,7 @@ public partial class TrayMenuWindow : Window
     public void UpdateState(bool enabled, string processName, string currentIme, bool hotkeyFailed)
     {
         StatusText.Text = enabled ? "状态：运行中" : "状态：已暂停";
-        ForegroundText.Text = $"当前前台软件：{(string.IsNullOrWhiteSpace(processName) ? "未知" : processName)}";
+        ForegroundText.Text = $"当前软件：{GetFriendlyProcessName(processName)}";
         CurrentImeText.Text = $"当前输入法：{currentIme}";
         ToggleButton.Content = enabled ? "暂停自动切换" : "启用自动切换";
         HotkeyFailureText.Visibility = hotkeyFailed ? Visibility.Visible : Visibility.Collapsed;
@@ -72,5 +72,25 @@ public partial class TrayMenuWindow : Window
     {
         Hide();
         action?.Invoke();
+    }
+
+    private static string GetFriendlyProcessName(string processName)
+    {
+        if (string.IsNullOrWhiteSpace(processName))
+        {
+            return "未知";
+        }
+
+        return processName.ToLowerInvariant() switch
+        {
+            "acad.exe" => "AutoCAD",
+            "3dsmax.exe" => "3ds Max",
+            "sketchup.exe" => "SketchUp",
+            "rhino.exe" => "Rhino",
+            "revit.exe" => "Revit",
+            "photoshop.exe" => "Photoshop",
+            "bs.ime.assistant.exe" => "IME 助手",
+            _ => processName
+        };
     }
 }
