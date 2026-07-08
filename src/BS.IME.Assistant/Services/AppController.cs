@@ -14,6 +14,7 @@ public sealed class AppController : IDisposable
     private readonly TrayService _trayService;
     private readonly FloatingStatusService _floatingStatusService;
     private readonly PipeCommandService _pipeCommandService;
+    private readonly MaxFocusImeService _maxFocusImeService;
     private readonly DispatcherTimer _timer;
     private AppSettings _settings;
     private ActiveWindowInfo? _lastWindow;
@@ -41,6 +42,7 @@ public sealed class AppController : IDisposable
         _trayService = new TrayService(_logger);
         _floatingStatusService = new FloatingStatusService(_logger, _settingsService);
         _pipeCommandService = new PipeCommandService(_logger);
+        _maxFocusImeService = new MaxFocusImeService(_logger);
         _settings = AppSettings.CreateDefault();
         _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
         _timer.Tick += (_, _) => Tick();
@@ -129,6 +131,11 @@ public sealed class AppController : IDisposable
             }
 
             if (TryApplyCadPluginRequest(window))
+            {
+                return;
+            }
+
+            if (TryApplyMaxFocusRequest(window))
             {
                 return;
             }
@@ -330,6 +337,47 @@ public sealed class AppController : IDisposable
         if (_imeService.SwitchTo(_maxPreferredIme, window.Handle, _settings, $"3dsmax-plugin:{_maxMode}"))
         {
             RecordSwitchAttempt(window.Handle, _maxPreferredIme);
+        }
+
+        return true;
+    }
+
+    private bool TryApplyMaxFocusRequest(ActiveWindowInfo window)
+    {
+        if (!Is3dsMax(window.ProcessName))
+        {
+            return false;
+        }
+
+        var decision = _maxFocusImeService.Detect(window);
+        if (decision is null)
+        {
+            return false;
+        }
+
+        _maxMode = decision.Reason;
+        _maxPreferredIme = decision.TargetIme;
+
+        if (_maxFocusImeService.ShouldLog(decision))
+        {
+            _logger.Info($"3ds Max focus IME decision: target={decision.TargetIme}, reason={decision.Reason}");
+        }
+
+        var targetHkl = decision.TargetIme == "zh" ? _settings.TargetChineseHkl : _settings.TargetEnglishHkl;
+        if (ImeService.HklEquals(targetHkl, GetCurrentHkl(window.ThreadId)))
+        {
+            ResetSwitchAttempt();
+            return true;
+        }
+
+        if (!CanRetrySwitch(window.Handle, decision.TargetIme))
+        {
+            return true;
+        }
+
+        if (_imeService.SwitchTo(decision.TargetIme, window.Handle, _settings, $"3dsmax-focus:{decision.Reason}"))
+        {
+            RecordSwitchAttempt(window.Handle, decision.TargetIme);
         }
 
         return true;
