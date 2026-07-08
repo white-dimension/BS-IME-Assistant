@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using BS.IME.Assistant.Models;
 using BS.IME.Assistant.Native;
 
@@ -8,6 +9,9 @@ namespace BS.IME.Assistant.Services;
 
 public sealed class ImeService
 {
+    private const int MaxSwitchRetries = 3;
+    private const int RetryDelayMs = 30;
+
     private readonly Logger _logger;
 
     public ImeService(Logger logger)
@@ -120,15 +124,42 @@ public sealed class ImeService
                 return false;
             }
 
-            var ok = Win32.PostMessage(foregroundWindow, Win32.WM_INPUTLANGCHANGEREQUEST, nint.Zero, hklValue);
-            if (!ok)
+            // Get the thread that owns the target window for verification.
+            var threadId = Win32.GetWindowThreadProcessId(foregroundWindow, out _);
+
+            for (var attempt = 0; attempt < MaxSwitchRetries; attempt++)
             {
-                _logger.Warn($"PostMessage failed when switching IME to {imeKind}. LastError={Marshal.GetLastWin32Error()}");
-                return false;
+                var ok = Win32.PostMessage(foregroundWindow, Win32.WM_INPUTLANGCHANGEREQUEST, nint.Zero, hklValue);
+                if (!ok)
+                {
+                    _logger.Warn($"PostMessage failed on attempt {attempt + 1} when switching IME to {imeKind}. LastError={Marshal.GetLastWin32Error()}");
+                    return false;
+                }
+
+                // Short synchronous wait for the target window to process the WM_INPUTLANGCHANGEREQUEST message.
+                // IME switches happen at low frequency (user-initiated or window-change driven),
+                // so a brief 30ms pause is acceptable to confirm the input language actually changed.
+                Thread.Sleep(RetryDelayMs);
+
+                var currentHklPtr = Win32.GetKeyboardLayout(threadId);
+                if (HklEquals(ToHklString(currentHklPtr), hkl))
+                {
+                    _logger.Info($"IME switch confirmed: {imeKind}, HKL={hkl}, reason={reason}");
+                    return true;
+                }
+
+                if (attempt < MaxSwitchRetries - 1)
+                {
+                    _logger.Warn($"IME switch not confirmed on attempt {attempt + 1}. " +
+                        $"currentHkl={ToHklString(currentHklPtr)}, targetHkl={hkl}, " +
+                        $"threadId={threadId}, windowHandle={foregroundWindow}, reason={reason}");
+                }
             }
 
-            _logger.Info($"IME switch requested: {imeKind}, HKL={hkl}, reason={reason}");
-            return true;
+            _logger.Warn($"IME switch failed after {MaxSwitchRetries} attempts: " +
+                $"imeKind={imeKind}, targetHkl={hkl}, " +
+                $"threadId={threadId}, windowHandle={foregroundWindow}, reason={reason}");
+            return false;
         }
         catch (Exception ex)
         {

@@ -17,6 +17,7 @@ OutputBaseFilename=BS-IME-Assistant-Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
+CloseApplications=force
 UninstallDisplayIcon={app}\BS.IME.Assistant.exe
 
 [Tasks]

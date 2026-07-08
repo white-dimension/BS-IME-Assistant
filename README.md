@@ -1,6 +1,6 @@
 # BS-IME-Assistant
 
-BS-IME-Assistant 是一个独立 Windows 常驻输入法助手，用于设计软件场景下自动管理中英文输入法。当前版本只做最小稳定能力：托盘常驻、识别前台设计软件、自动切换默认输入法、全局快捷键手动切换、配置文件和日志。
+BS-IME-Assistant 是一个独立 Windows 常驻输入法助手，用于设计软件场景下自动管理中英文输入法。当前版本只做最小稳定能力：托盘常驻、识别前台设计软件、自动切换默认输入法、托盘菜单手动切换、配置文件和日志。
 
 本项目不集成 BS OS，不实现 AutoCAD 插件，不引用 Autodesk.AutoCAD.*，不实现 3ds Max 插件，也不引用 3ds Max SDK。
 
@@ -38,7 +38,7 @@ dotnet run --project .\src\BS.IME.Assistant\BS.IME.Assistant.csproj
 ```json
 "floatingStatus": {
   "enabled": true,
-  "left": 1400,
+  "left": 120,
   "top": 120,
   "width": 200,
   "height": 48,
@@ -83,15 +83,6 @@ CAD 增强识别配置：
 - `en`
 - `zh`
 
-## 快捷键
-
-默认全局快捷键：
-
-- `Ctrl+Alt+E`：切换到英文输入法
-- `Ctrl+Alt+C`：切换到中文输入法
-
-如果热键被其他软件占用，程序会继续运行，并在日志和托盘菜单中提示热键注册失败。
-
 ## 当前阶段限制
 
 - 不做复杂 UI，只提供托盘菜单和一个最小状态窗口。
@@ -99,6 +90,6 @@ CAD 增强识别配置：
 - 不接 BS OS。
 - 不接 AutoCAD API。
 - 不接 3ds Max SDK。
-- `startWithWindows` 当前是预留配置项，暂未注册开机启动。
+- `settings.json` 中的 `startWithWindows` 暂未生效。开机启动由安装程序在安装时注册，可通过安装向导的"Start BS IME Assistant when Windows starts"选项控制。
 - 输入法检测基于 Windows 当前可用键盘布局，部分第三方输入法的 HKL/描述可能因系统环境不同而不同。
 - 自动切换通过向当前前台窗口发送 `WM_INPUTLANGCHANGEREQUEST`，少数高权限窗口或特殊程序可能拒绝处理。
