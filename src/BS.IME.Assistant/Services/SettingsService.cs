@@ -16,8 +16,8 @@ public sealed class SettingsService
     public SettingsService(Logger logger)
     {
         _logger = logger;
-        AppDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "BS-IME-Assistant");
-        SettingsPath = Path.Combine(AppDirectory, "settings.json");
+        AppDirectory = AppPaths.Root;
+        SettingsPath = AppPaths.SettingsFile;
         Directory.CreateDirectory(AppDirectory);
     }
 
@@ -49,6 +49,20 @@ public sealed class SettingsService
         catch (Exception ex)
         {
             _logger.Error("Failed to load settings, using defaults.", ex);
+
+            try
+            {
+                if (File.Exists(SettingsPath))
+                {
+                    File.Copy(SettingsPath, AppPaths.SettingsBackupFile, overwrite: true);
+                    _logger.Warn($"Corrupted settings backed up to {AppPaths.SettingsBackupFile}");
+                }
+            }
+            catch (Exception backupEx)
+            {
+                _logger.Warn($"Failed to backup corrupted settings: {backupEx.Message}");
+            }
+
             var defaults = AppSettings.CreateDefault();
             Save(defaults);
             return defaults;

@@ -32,8 +32,7 @@ public sealed class AppController : IDisposable
     public AppController(MainWindow window)
     {
         _window = window;
-        var appDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "BS-IME-Assistant");
-        _logger = new Logger(appDirectory);
+        _logger = new Logger(AppPaths.Root);
         _settingsService = new SettingsService(_logger);
         _imeService = new ImeService(_logger);
         _activeWindowService = new ActiveWindowService(_logger);
