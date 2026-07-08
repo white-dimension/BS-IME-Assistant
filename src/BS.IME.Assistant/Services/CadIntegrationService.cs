@@ -114,9 +114,8 @@ public sealed class CadIntegrationService
 
         if (settings.CadIntegration.Enabled && _pluginConnected)
         {
-            var label = string.IsNullOrWhiteSpace(_mode) ? "CAD 增强已连接" : _mode;
             var imeText = currentIme == "中文" ? "中文输入" : currentIme == "英文" ? "英文输入" : "输入法未知";
-            _floatingStatusService.UpdateCustom("CAD", $"{label} · {imeText}", "#CC155E75");
+            _floatingStatusService.UpdateCustom("CAD", imeText, "#CC155E75");
             return true;
         }
 

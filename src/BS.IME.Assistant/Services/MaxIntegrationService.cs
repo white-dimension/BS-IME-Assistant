@@ -38,7 +38,7 @@ public sealed class MaxIntegrationService
         {
             _mode = "3ds Max 插件已连接";
             _preferredIme = "en";
-            _floatingStatusService.UpdateCustom("MAX", "3ds Max 插件已连接", "#CC4338CA");
+            _floatingStatusService.UpdateCustom("MAX", "MAX 已连接", "#CC4338CA");
             return;
         }
 
@@ -46,7 +46,7 @@ public sealed class MaxIntegrationService
         {
             _mode = "3ds Max 插件已断开";
             _preferredIme = "";
-            _floatingStatusService.UpdateCustom("MAX", "3ds Max 插件已断开", "#CC374151");
+            _floatingStatusService.UpdateCustom("MAX", "MAX", "#CC374151");
             return;
         }
 
@@ -126,9 +126,8 @@ public sealed class MaxIntegrationService
             return false;
         }
 
-        var label = string.IsNullOrWhiteSpace(_mode) ? "3ds Max 插件已连接" : _mode;
         var imeText = currentIme == "中文" ? "中文输入" : currentIme == "英文" ? "英文输入" : "输入法未知";
-        _floatingStatusService.UpdateCustom("MAX", $"{label} · {imeText}", "#CC4338CA");
+        _floatingStatusService.UpdateCustom("MAX", imeText, "#CC4338CA");
         return true;
     }
 
