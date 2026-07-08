@@ -122,27 +122,6 @@ public sealed class SettingsService
             }
         }
 
-        if (settings.Hotkeys is null)
-        {
-            settings.Hotkeys = new HotkeySettings();
-            changed = true;
-            _logger.Warn("Hotkeys were missing; restored default hotkeys.");
-        }
-        else
-        {
-            if (string.IsNullOrWhiteSpace(settings.Hotkeys.SwitchEnglish))
-            {
-                settings.Hotkeys.SwitchEnglish = "Ctrl+Alt+E";
-                changed = true;
-            }
-
-            if (string.IsNullOrWhiteSpace(settings.Hotkeys.SwitchChinese))
-            {
-                settings.Hotkeys.SwitchChinese = "Ctrl+Alt+C";
-                changed = true;
-            }
-        }
-
         if (settings.FloatingStatus is null)
         {
             settings.FloatingStatus = new FloatingStatusSettings();

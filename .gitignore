@@ -7,3 +7,8 @@ build-check/
 *.userosscache
 *.sln.docstates
 TestResults/
+installer/stage/
+installer/dist/
+installer/bootstrapper/Payload.zip
+installer/bootstrapper/bin/
+installer/bootstrapper/obj/

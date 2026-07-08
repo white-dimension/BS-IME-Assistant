@@ -10,7 +10,6 @@ public sealed class AppController : IDisposable
     private readonly SettingsService _settingsService;
     private readonly ImeService _imeService;
     private readonly ActiveWindowService _activeWindowService;
-    private readonly HotkeyService _hotkeyService;
     private readonly TrayService _trayService;
     private readonly FloatingStatusService _floatingStatusService;
     private readonly PipeCommandService _pipeCommandService;
@@ -38,7 +37,6 @@ public sealed class AppController : IDisposable
         _settingsService = new SettingsService(_logger);
         _imeService = new ImeService(_logger);
         _activeWindowService = new ActiveWindowService(_logger);
-        _hotkeyService = new HotkeyService(_logger);
         _trayService = new TrayService(_logger);
         _floatingStatusService = new FloatingStatusService(_logger, _settingsService);
         _pipeCommandService = new PipeCommandService(_logger);
@@ -60,9 +58,6 @@ public sealed class AppController : IDisposable
         _floatingStatusService.Initialize(_settings);
         _floatingStatusService.CadPromptAccepted += EnableCadIntegration;
         _floatingStatusService.CadPromptDismissed += () => _cadPromptDismissedThisSession = true;
-
-        _hotkeyService.HotkeyPressed += kind => ManualSwitch(kind, "hotkey");
-        _hotkeyService.Register(windowHandle, _settings.Hotkeys.SwitchEnglish, _settings.Hotkeys.SwitchChinese);
         _pipeCommandService.CommandReceived += OnPipeCommandReceived;
         _pipeCommandService.Start();
 
@@ -74,7 +69,7 @@ public sealed class AppController : IDisposable
         _trayService.OpenSettingsRequested += () => TrayService.OpenPath(_settingsService.SettingsPath, _logger);
         _trayService.OpenLogsRequested += () => TrayService.OpenPath(_logger.LogDirectory, _logger);
         _trayService.ExitRequested += () => System.Windows.Application.Current.Shutdown();
-        _trayService.Initialize(_settings.Enabled, _hotkeyService.HasRegistrationFailure);
+        _trayService.Initialize(_settings.Enabled);
 
         _timer.Start();
         Tick();
@@ -91,7 +86,6 @@ public sealed class AppController : IDisposable
         {
             _timer.Stop();
             _pipeCommandService.Dispose();
-            _hotkeyService.Dispose();
             _floatingStatusService.Dispose();
             _trayService.Dispose();
             _logger.Info("Program exited.");
@@ -110,7 +104,7 @@ public sealed class AppController : IDisposable
         {
             var window = _activeWindowService.GetForegroundWindowInfo();
             var currentIme = window is null ? "未知" : _imeService.GetCurrentImeKind(window.ThreadId, _settings);
-            _trayService.Update(_settings.Enabled, window?.ProcessName ?? "", currentIme, _hotkeyService.HasRegistrationFailure);
+            _trayService.Update(_settings.Enabled, window?.ProcessName ?? "", currentIme);
             UpdateFloatingStatus(window, currentIme);
 
             if (window is null)

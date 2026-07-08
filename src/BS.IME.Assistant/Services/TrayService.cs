@@ -13,7 +13,6 @@ public sealed class TrayService : IDisposable
     private bool _enabled;
     private string _processName = "";
     private string _currentIme = "未知";
-    private bool _hotkeyFailed;
     private bool _disposed;
 
     public TrayService(Logger logger)
@@ -30,10 +29,9 @@ public sealed class TrayService : IDisposable
     public event Action? OpenLogsRequested;
     public event Action? ExitRequested;
 
-    public void Initialize(bool enabled, bool hotkeyFailed)
+    public void Initialize(bool enabled)
     {
         _enabled = enabled;
-        _hotkeyFailed = hotkeyFailed;
         EnsureMenuWindow();
 
         _notifyIcon = new NotifyIcon
@@ -44,18 +42,17 @@ public sealed class TrayService : IDisposable
         };
         _notifyIcon.MouseUp += OnNotifyIconMouseUp;
 
-        Update(enabled, "", "未知", hotkeyFailed);
+        Update(enabled, "", "未知");
         _logger.Info("Tray icon initialized.");
     }
 
-    public void Update(bool enabled, string processName, string currentIme, bool hotkeyFailed)
+    public void Update(bool enabled, string processName, string currentIme)
     {
         _enabled = enabled;
         _processName = processName;
         _currentIme = currentIme;
-        _hotkeyFailed = hotkeyFailed;
 
-        _menuWindow?.UpdateState(_enabled, _processName, _currentIme, _hotkeyFailed);
+        _menuWindow?.UpdateState(_enabled, _processName, _currentIme);
     }
 
     public static void OpenPath(string path, Logger logger)
@@ -84,7 +81,7 @@ public sealed class TrayService : IDisposable
             return;
         }
 
-        _menuWindow.UpdateState(_enabled, _processName, _currentIme, _hotkeyFailed);
+        _menuWindow.UpdateState(_enabled, _processName, _currentIme);
         _menuWindow.ShowAt(Screen.FromPoint(Cursor.Position), Cursor.Position);
     }
 
@@ -104,7 +101,7 @@ public sealed class TrayService : IDisposable
         _menuWindow.OpenSettingsRequested += () => OpenSettingsRequested?.Invoke();
         _menuWindow.OpenLogsRequested += () => OpenLogsRequested?.Invoke();
         _menuWindow.ExitRequested += () => ExitRequested?.Invoke();
-        _menuWindow.UpdateState(_enabled, _processName, _currentIme, _hotkeyFailed);
+        _menuWindow.UpdateState(_enabled, _processName, _currentIme);
     }
 
     private Icon LoadTrayIcon()

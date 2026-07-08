@@ -8,7 +8,6 @@ public sealed class AppSettings
     public string TargetChineseHkl { get; set; } = "";
     public string TargetEnglishHkl { get; set; } = "";
     public List<AppProfile> Profiles { get; set; } = CreateDefaultProfiles();
-    public HotkeySettings Hotkeys { get; set; } = new();
     public FloatingStatusSettings FloatingStatus { get; set; } = new();
     public CadIntegrationSettings CadIntegration { get; set; } = new();
 
@@ -19,7 +18,6 @@ public sealed class AppSettings
         TargetChineseHkl = "",
         TargetEnglishHkl = "",
         Profiles = CreateDefaultProfiles(),
-        Hotkeys = new HotkeySettings(),
         FloatingStatus = new FloatingStatusSettings(),
         CadIntegration = new CadIntegrationSettings()
     };

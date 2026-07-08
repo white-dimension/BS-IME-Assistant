@@ -78,14 +78,6 @@
             <TextBlock x:Name="StatusText" Style="{StaticResource InfoTextStyle}"/>
             <TextBlock x:Name="ForegroundText" Style="{StaticResource InfoTextStyle}"/>
             <TextBlock x:Name="CurrentImeText" Style="{StaticResource InfoTextStyle}"/>
-            <TextBlock x:Name="HotkeyFailureText"
-                       Text="热键注册失败"
-                       Foreground="#FCA5A5"
-                       FontFamily="Microsoft YaHei UI"
-                       FontSize="12"
-                       Margin="12,2,12,2"
-                       Visibility="Collapsed"/>
-
             <Border Height="1" Background="#3A3A3A" Margin="2,6"/>
 
             <Button x:Name="ToggleButton" Style="{StaticResource MenuButtonStyle}" Click="ToggleButton_Click"/>

@@ -20,13 +20,12 @@ public partial class TrayMenuWindow : Window
     public event Action? OpenLogsRequested;
     public event Action? ExitRequested;
 
-    public void UpdateState(bool enabled, string processName, string currentIme, bool hotkeyFailed)
+    public void UpdateState(bool enabled, string processName, string currentIme)
     {
         StatusText.Text = enabled ? "状态：运行中" : "状态：已暂停";
         ForegroundText.Text = $"当前软件：{GetFriendlyProcessName(processName)}";
         CurrentImeText.Text = $"当前输入法：{currentIme}";
         ToggleButton.Content = enabled ? "暂停自动切换" : "启用自动切换";
-        HotkeyFailureText.Visibility = hotkeyFailed ? Visibility.Visible : Visibility.Collapsed;
     }
 
     public void ShowAt(Forms.Screen screen, System.Drawing.Point cursorPosition)
