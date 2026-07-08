@@ -16,12 +16,13 @@ OutputDir=dist
 OutputBaseFilename=BS-IME-Assistant-Setup
 Compression=lzma2
 SolidCompression=yes
+DefaultGroupName=BS IME Assistant
 WizardStyle=modern
 CloseApplications=force
 UninstallDisplayIcon={app}\BS.IME.Assistant.exe
 
 [Tasks]
-Name: "autostart"; Description: "Start BS IME Assistant when Windows starts"; Flags: checkedonce
+Name: "autostart"; Description: "Start BS IME Assistant when Windows starts"; Flags: checkablealone
 Name: "cad"; Description: "Install AutoCAD ApplicationPlugin bundle for current user"; Flags: checkedonce
 Name: "max"; Description: "Install 3ds Max startup bridge for current user"; Flags: checkedonce
 
