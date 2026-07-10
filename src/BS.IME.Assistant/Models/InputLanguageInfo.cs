@@ -12,4 +12,6 @@ public sealed class InputLanguageInfo
     public string FriendlyName => string.IsNullOrWhiteSpace(ImeDescription)
         ? DisplayName
         : $"{DisplayName} - {ImeDescription}";
+
+    public override string ToString() => FriendlyName;
 }

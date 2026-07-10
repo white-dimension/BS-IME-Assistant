@@ -3,7 +3,6 @@ namespace BS.IME.Assistant.Models;
 public sealed class AppSettings
 {
     public bool Enabled { get; set; } = true;
-    // Reserved for a later startup registration feature.
     public bool StartWithWindows { get; set; }
     public string TargetChineseHkl { get; set; } = "";
     public string TargetEnglishHkl { get; set; } = "";

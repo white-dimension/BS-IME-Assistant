@@ -12,8 +12,6 @@ public partial class FloatingStatusWindow : Window
     private const int GwlExStyle = -20;
     private const int WsExToolWindow = 0x00000080;
     private const int WsExNoActivate = 0x08000000;
-    private const double MinCapsuleWidth = 132;
-    private const double MaxCapsuleWidth = 420;
     private const double IdleOpacity = 0.72;
     private const double HoverOpacity = 0.96;
 
@@ -39,7 +37,6 @@ public partial class FloatingStatusWindow : Window
             BadgeText.Text = "中";
             StatusText.Text = "中文输入";
             Capsule.Background = BrushFrom("#99B45309");
-            ResizeForText(StatusText.Text);
             return;
         }
 
@@ -48,14 +45,12 @@ public partial class FloatingStatusWindow : Window
             BadgeText.Text = "EN";
             StatusText.Text = "英文输入";
             Capsule.Background = BrushFrom("#991D4ED8");
-            ResizeForText(StatusText.Text);
             return;
         }
 
         BadgeText.Text = "?";
         StatusText.Text = "输入法未知";
         Capsule.Background = BrushFrom("#99374151");
-        ResizeForText(StatusText.Text);
     }
 
     public void UpdateCustomStatus(string badge, string text, string color)
@@ -65,7 +60,6 @@ public partial class FloatingStatusWindow : Window
         BadgeText.Text = badge;
         StatusText.Text = text;
         Capsule.Background = BrushFrom(color);
-        ResizeForText(text);
     }
 
     public void ShowCadPrompt()
@@ -73,7 +67,6 @@ public partial class FloatingStatusWindow : Window
         StatusPanel.Visibility = Visibility.Collapsed;
         PromptPanel.Visibility = Visibility.Visible;
         Capsule.Background = BrushFrom("#CC155E75");
-        Width = 300;
         ClampToScreen();
     }
 
@@ -195,13 +188,6 @@ public partial class FloatingStatusWindow : Window
         var brush = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(color));
         brush.Freeze();
         return brush;
-    }
-
-    private void ResizeForText(string text)
-    {
-        var textWeight = text.Count(c => c > 127) * 15 + text.Count(c => c <= 127) * 8;
-        Width = Math.Clamp(66 + textWeight, MinCapsuleWidth, MaxCapsuleWidth);
-        ClampToScreen();
     }
 
     [DllImport("user32.dll")]

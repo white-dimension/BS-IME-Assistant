@@ -97,6 +97,7 @@ public sealed class SettingsService
         else
         {
             var validProfiles = new List<AppProfile>();
+            var seenProcesses = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var profile in settings.Profiles)
             {
                 if (string.IsNullOrWhiteSpace(profile.ProcessName))
@@ -116,6 +117,13 @@ public sealed class SettingsService
                 {
                     changed = true;
                     _logger.Info($"Removed unsupported software profile: {profile.ProcessName}");
+                    continue;
+                }
+
+                if (!seenProcesses.Add(profile.ProcessName))
+                {
+                    changed = true;
+                    _logger.Info($"Removed duplicate software profile: {profile.ProcessName}");
                     continue;
                 }
 
@@ -145,21 +153,12 @@ public sealed class SettingsService
                 }
 
                 validProfiles.Add(defaultProfile);
+                seenProcesses.Add(defaultProfile.ProcessName);
                 changed = true;
                 _logger.Info($"Restored required software profile: {defaultProfile.ProcessName}");
             }
 
-            if (validProfiles.Count == 0)
-            {
-                settings.Profiles = AppSettings.CreateDefaultProfiles();
-                changed = true;
-                _logger.Warn("All profiles were invalid; restored default profiles.");
-            }
-            else if (validProfiles.Count != settings.Profiles.Count)
-            {
-                settings.Profiles = validProfiles;
-                changed = true;
-            }
+            settings.Profiles = validProfiles;
         }
 
         if (settings.FloatingStatus is null)
@@ -170,7 +169,7 @@ public sealed class SettingsService
         }
         else
         {
-            if (settings.FloatingStatus.Width < 120 || settings.FloatingStatus.Width > 360)
+            if (settings.FloatingStatus.Width < 132 || settings.FloatingStatus.Width > 360)
             {
                 settings.FloatingStatus.Width = 180;
                 changed = true;

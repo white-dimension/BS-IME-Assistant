@@ -27,6 +27,7 @@ public sealed class MaxIntegrationService
 
     public void HandlePipeCommand(PipeImeCommand command, AppSettings settings,
         ActiveWindowInfo? activeWindow,
+        bool allowImeSwitch,
         out string? targetIme, out nint targetWindowHandle)
     {
         targetIme = null;
@@ -38,7 +39,10 @@ public sealed class MaxIntegrationService
         {
             _mode = "3ds Max 插件已连接";
             _preferredIme = "en";
-            _floatingStatusService.UpdateCustom("MAX", "MAX 已连接", "#CC4338CA");
+            if (allowImeSwitch && activeWindow is not null && Is3dsMax(activeWindow.ProcessName))
+            {
+                _floatingStatusService.UpdateCustom("MAX", "MAX 已连接", "#CC4338CA");
+            }
             return;
         }
 
@@ -46,14 +50,17 @@ public sealed class MaxIntegrationService
         {
             _mode = "3ds Max 插件已断开";
             _preferredIme = "";
-            _floatingStatusService.UpdateCustom("MAX", "MAX", "#CC374151");
+            if (allowImeSwitch && activeWindow is not null && Is3dsMax(activeWindow.ProcessName))
+            {
+                _floatingStatusService.UpdateCustom("MAX", "MAX", "#CC374151");
+            }
             return;
         }
 
         _mode = string.IsNullOrWhiteSpace(command.Mode) ? command.Event : command.Mode;
         _preferredIme = command.PreferredIme.Equals("zh", StringComparison.OrdinalIgnoreCase) ? "zh" : "en";
 
-        if (activeWindow is not null && Is3dsMax(activeWindow.ProcessName))
+        if (allowImeSwitch && activeWindow is not null && Is3dsMax(activeWindow.ProcessName))
         {
             _imeService.SwitchTo(_preferredIme, activeWindow.Handle, settings, $"3dsmax-plugin:{command.Event}");
             targetIme = _preferredIme;

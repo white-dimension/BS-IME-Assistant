@@ -74,7 +74,7 @@ public sealed class FloatingStatusService : IDisposable
             return;
         }
 
-        _window.Width = Math.Max(_settings.FloatingStatus.Width, 260);
+        _window.Width = Math.Max(_settings.FloatingStatus.Width, 300);
         _window.Height = Math.Max(_settings.FloatingStatus.Height, 64);
         _window.ClampToScreen();
         _window.ShowCadPrompt();

@@ -70,7 +70,7 @@ public sealed class MaxFocusImeService
                 return HandleNonInput(window);
 
             // ── TextPattern → 读取实际文本内容 ──
-            if (TryGetTextContent(focused, out var textContent))
+            if (TryGetTextContent(focused, out var textContent) && !string.IsNullOrWhiteSpace(textContent))
             {
                 if (!IsNumericString(textContent))
                 {

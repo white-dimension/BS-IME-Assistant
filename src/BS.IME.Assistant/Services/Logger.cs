@@ -7,8 +7,8 @@ public sealed class Logger
 
     public Logger(string appDirectory)
     {
-        LogDirectory = AppPaths.LogDirectory;
-        LogPath = AppPaths.LogFile;
+        LogDirectory = Path.Combine(appDirectory, "logs");
+        LogPath = Path.Combine(LogDirectory, "debug.log");
         Directory.CreateDirectory(LogDirectory);
     }
 

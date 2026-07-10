@@ -50,6 +50,12 @@ public sealed class AppController : IDisposable
     {
         _logger.Info("Program started.");
         _settings = _settingsService.LoadOrCreate();
+        if (TryGetStartupRegistration(out var registeredForStartup) &&
+            _settings.StartWithWindows != registeredForStartup)
+        {
+            _settings.StartWithWindows = registeredForStartup;
+            _settingsService.Save(_settings);
+        }
         var languages = _imeService.GetInstalledInputLanguages();
         _imeService.EnsureTargets(_settings, languages, _settingsService);
         _window.UpdateInfo(_settings.Enabled, _settings.TargetChineseHkl, _settings.TargetEnglishHkl, _settingsService.SettingsPath, _logger.LogPath);
@@ -125,7 +131,9 @@ public sealed class AppController : IDisposable
                 return;
             }
 
-            if (_cadService.TryApply(window, _settings, GetCurrentHkl(window.ThreadId), out var cadResetRetry, out var cadTargetIme))
+            var profile = FindProfile(window.ProcessName);
+            if (profile?.Enabled == true &&
+                _cadService.TryApply(window, _settings, GetCurrentHkl(window.ThreadId), out var cadResetRetry, out var cadTargetIme))
             {
                 if (cadResetRetry)
                 {
@@ -144,7 +152,8 @@ public sealed class AppController : IDisposable
                 return;
             }
 
-            if (_maxService.TryApplyFocus(window, _settings, GetCurrentHkl(window.ThreadId), out var maxFocusReset, out var maxFocusTarget))
+            if (profile?.Enabled == true &&
+                _maxService.TryApplyFocus(window, _settings, GetCurrentHkl(window.ThreadId), out var maxFocusReset, out var maxFocusTarget))
             {
                 if (maxFocusReset)
                 {
@@ -163,7 +172,8 @@ public sealed class AppController : IDisposable
                 return;
             }
 
-            if (_maxService.TryApply(window, _settings, GetCurrentHkl(window.ThreadId), out var maxPluginReset, out var maxPluginTarget))
+            if (profile?.Enabled == true &&
+                _maxService.TryApply(window, _settings, GetCurrentHkl(window.ThreadId), out var maxPluginReset, out var maxPluginTarget))
             {
                 if (maxPluginReset)
                 {
@@ -182,12 +192,7 @@ public sealed class AppController : IDisposable
                 return;
             }
 
-            var profile = _settings.Profiles.FirstOrDefault(x =>
-                x.Enabled &&
-                x.SwitchOnActivate &&
-                string.Equals(NormalizeProcessName(x.ProcessName), NormalizeProcessName(window.ProcessName), StringComparison.OrdinalIgnoreCase));
-
-            if (profile is null)
+            if (profile is null || !profile.Enabled || !profile.SwitchOnActivate)
             {
                 return;
             }
@@ -277,37 +282,72 @@ public sealed class AppController : IDisposable
 
     private void ApplySettings(AppSettings settings, IReadOnlyList<InputLanguageInfo> languages)
     {
+        if (!ApplyStartupRegistration(settings.StartWithWindows))
+        {
+            settings.StartWithWindows = TryGetStartupRegistration(out var registeredForStartup)
+                ? registeredForStartup
+                : _settings.StartWithWindows;
+        }
+
         _settings = settings;
         _imeService.EnsureTargets(_settings, languages, _settingsService);
         _settingsService.Save(_settings);
-        ApplyStartupRegistration(_settings.StartWithWindows);
         _floatingStatusService.ApplySettings(_settings);
         _window.UpdateInfo(_settings.Enabled, _settings.TargetChineseHkl, _settings.TargetEnglishHkl, _settingsService.SettingsPath, _logger.LogPath);
         _trayService.Update(_settings.Enabled, _lastWindow?.ProcessName ?? "", "未知");
         _logger.Info("Settings applied.");
     }
 
-    private void ApplyStartupRegistration(bool enabled)
+    private bool ApplyStartupRegistration(bool enabled)
     {
         try
         {
             using var key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run");
+            if (key is null)
+            {
+                _logger.Warn("Windows startup registry key is unavailable.");
+                return false;
+            }
+
             if (enabled)
             {
                 var exe = Environment.ProcessPath;
                 if (!string.IsNullOrWhiteSpace(exe))
                 {
-                    key?.SetValue("BS-IME-Assistant", $"\"{exe}\"");
+                    key.SetValue("BS-IME-Assistant", $"\"{exe}\"");
+                }
+                else
+                {
+                    return false;
                 }
             }
             else
             {
-                key?.DeleteValue("BS-IME-Assistant", throwOnMissingValue: false);
+                key.DeleteValue("BS-IME-Assistant", throwOnMissingValue: false);
             }
+
+            return true;
         }
         catch (Exception ex)
         {
             _logger.Error("Failed to update Windows startup registration.", ex);
+            return false;
+        }
+    }
+
+    private bool TryGetStartupRegistration(out bool enabled)
+    {
+        enabled = false;
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run");
+            enabled = key?.GetValue("BS-IME-Assistant") is string value && !string.IsNullOrWhiteSpace(value);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error("Failed to read Windows startup registration.", ex);
+            return false;
         }
     }
 
@@ -321,6 +361,7 @@ public sealed class AppController : IDisposable
                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
                 {
                     FileName = exe,
+                    Arguments = $"--wait-for-process {Environment.ProcessId}",
                     UseShellExecute = true,
                     WorkingDirectory = AppContext.BaseDirectory
                 });
@@ -341,7 +382,13 @@ public sealed class AppController : IDisposable
             if (command.Source.Equals("AutoCAD", StringComparison.OrdinalIgnoreCase))
             {
                 var activeWindow = _activeWindowService.GetForegroundWindowInfo();
-                _cadService.HandlePipeCommand(command, _settings, activeWindow, out var cadTargetIme, out var cadTargetHandle);
+                _cadService.HandlePipeCommand(
+                    command,
+                    _settings,
+                    activeWindow,
+                    IsProfileEnabled("acad.exe"),
+                    out var cadTargetIme,
+                    out var cadTargetHandle);
                 if (cadTargetIme is not null)
                 {
                     RecordSwitchAttempt(cadTargetHandle, cadTargetIme);
@@ -353,7 +400,13 @@ public sealed class AppController : IDisposable
                 command.Source.Equals("3ds Max", StringComparison.OrdinalIgnoreCase))
             {
                 var activeWindow = _activeWindowService.GetForegroundWindowInfo();
-                _maxService.HandlePipeCommand(command, _settings, activeWindow, out var maxTargetIme, out var maxTargetHandle);
+                _maxService.HandlePipeCommand(
+                    command,
+                    _settings,
+                    activeWindow,
+                    IsProfileEnabled("3dsmax.exe"),
+                    out var maxTargetIme,
+                    out var maxTargetHandle);
                 if (maxTargetIme is not null)
                 {
                     RecordSwitchAttempt(maxTargetHandle, maxTargetIme);
@@ -365,12 +418,14 @@ public sealed class AppController : IDisposable
 
     private void UpdateFloatingStatus(ActiveWindowInfo? window, string currentIme)
     {
-        if (_cadService.TryUpdateFloatingStatus(window, currentIme, _settings))
+        if (window is not null && IsProfileEnabled(window.ProcessName) &&
+            _cadService.TryUpdateFloatingStatus(window, currentIme, _settings))
         {
             return;
         }
 
-        if (_maxService.TryUpdateFloatingStatus(window, currentIme))
+        if (window is not null && IsProfileEnabled(window.ProcessName) &&
+            _maxService.TryUpdateFloatingStatus(window, currentIme))
         {
             return;
         }
@@ -380,6 +435,15 @@ public sealed class AppController : IDisposable
 
     private static string NormalizeProcessName(string processName) =>
         processName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? processName : $"{processName}.exe";
+
+    private AppProfile? FindProfile(string processName) =>
+        _settings.Profiles.FirstOrDefault(profile =>
+            string.Equals(
+                NormalizeProcessName(profile.ProcessName),
+                NormalizeProcessName(processName),
+                StringComparison.OrdinalIgnoreCase));
+
+    private bool IsProfileEnabled(string processName) => FindProfile(processName)?.Enabled == true;
 
     private bool CanRetrySwitch(nint windowHandle, string target)
     {

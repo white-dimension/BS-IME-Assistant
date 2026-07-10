@@ -1,6 +1,7 @@
+using System.Diagnostics;
+using System.Threading;
 using System.Windows;
 using System.Windows.Interop;
-using System.Threading;
 using BS.IME.Assistant.Services;
 
 namespace BS.IME.Assistant;
@@ -12,6 +13,8 @@ public partial class App : System.Windows.Application
 
     private void Application_Startup(object sender, StartupEventArgs e)
     {
+        WaitForPreviousInstance(e.Args);
+
         _singleInstanceMutex = new Mutex(true, "Global\\BS_IME_Assistant_SingleInstance", out var createdNew);
         if (!createdNew)
         {
@@ -39,6 +42,31 @@ public partial class App : System.Windows.Application
 
         _controller.Start(handle);
         window.Hide();
+    }
+
+    private static void WaitForPreviousInstance(string[] args)
+    {
+        if (args.Length != 2 ||
+            !args[0].Equals("--wait-for-process", StringComparison.OrdinalIgnoreCase) ||
+            !int.TryParse(args[1], out var processId) ||
+            processId == Environment.ProcessId)
+        {
+            return;
+        }
+
+        try
+        {
+            using var process = Process.GetProcessById(processId);
+            process.WaitForExit(10_000);
+        }
+        catch (ArgumentException)
+        {
+            // The previous process has already exited.
+        }
+        catch (InvalidOperationException)
+        {
+            // The previous process exited while it was being inspected.
+        }
     }
 
     private void Application_Exit(object sender, ExitEventArgs e)

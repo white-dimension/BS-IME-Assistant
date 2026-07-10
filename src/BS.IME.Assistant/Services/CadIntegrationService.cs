@@ -28,6 +28,7 @@ public sealed class CadIntegrationService
 
     public void HandlePipeCommand(PipeImeCommand command, AppSettings settings,
         ActiveWindowInfo? activeWindow,
+        bool allowImeSwitch,
         out string? targetIme, out nint targetWindowHandle)
     {
         targetIme = null;
@@ -38,16 +39,11 @@ public sealed class CadIntegrationService
         if (command.Event.Equals("PluginReady", StringComparison.OrdinalIgnoreCase))
         {
             _mode = "CAD 插件已连接";
-            if (!settings.CadIntegration.Enabled)
-            {
-                _floatingStatusService.ShowCadPrompt();
-            }
             return;
         }
 
         if (!settings.CadIntegration.Enabled)
         {
-            _floatingStatusService.ShowCadPrompt();
             _logger.Info("CAD plugin command ignored because CAD integration is not enabled.");
             return;
         }
@@ -55,7 +51,7 @@ public sealed class CadIntegrationService
         _mode = string.IsNullOrWhiteSpace(command.Mode) ? command.Event : command.Mode;
         _preferredIme = command.PreferredIme.Equals("zh", StringComparison.OrdinalIgnoreCase) ? "zh" : "en";
 
-        if (activeWindow is not null && IsAutoCad(activeWindow.ProcessName))
+        if (allowImeSwitch && activeWindow is not null && IsAutoCad(activeWindow.ProcessName))
         {
             _imeService.SwitchTo(_preferredIme, activeWindow.Handle, settings, $"cad-plugin:{command.Event}");
             targetIme = _preferredIme;

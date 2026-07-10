@@ -49,8 +49,6 @@ public partial class SettingsWindow : Window
     {
         EnabledCheckBox.IsChecked = _settings.Enabled;
         StartWithWindowsCheckBox.IsChecked = _settings.StartWithWindows;
-        FloatingEnabledCheckBox.IsChecked = _settings.FloatingStatus.Enabled;
-        FloatingTopmostCheckBox.IsChecked = _settings.FloatingStatus.Topmost;
         CadIntegrationEnabledCheckBox.IsChecked = _settings.CadIntegration.Enabled;
         CadPromptOnDetectCheckBox.IsChecked = _settings.CadIntegration.PromptOnDetect;
 
@@ -61,15 +59,6 @@ public partial class SettingsWindow : Window
         SelectIme(ChineseImeComboBox, _settings.TargetChineseHkl, preferChinese: true);
         SelectIme(EnglishImeComboBox, _settings.TargetEnglishHkl, preferChinese: false);
         UpdateHklPreview();
-
-        FloatingEnabledCheckBox.Checked += (_, _) => CapsuleEnabledCheckBox.IsChecked = true;
-        FloatingEnabledCheckBox.Unchecked += (_, _) => CapsuleEnabledCheckBox.IsChecked = false;
-        CapsuleEnabledCheckBox.Checked += (_, _) => FloatingEnabledCheckBox.IsChecked = true;
-        CapsuleEnabledCheckBox.Unchecked += (_, _) => FloatingEnabledCheckBox.IsChecked = false;
-        FloatingTopmostCheckBox.Checked += (_, _) => CapsuleTopmostCheckBox.IsChecked = true;
-        FloatingTopmostCheckBox.Unchecked += (_, _) => CapsuleTopmostCheckBox.IsChecked = false;
-        CapsuleTopmostCheckBox.Checked += (_, _) => FloatingTopmostCheckBox.IsChecked = true;
-        CapsuleTopmostCheckBox.Unchecked += (_, _) => FloatingTopmostCheckBox.IsChecked = false;
 
         ProfilesList.ItemsSource = _settings.Profiles;
 
@@ -86,7 +75,7 @@ public partial class SettingsWindow : Window
 
     private void SaveButton_Click(object sender, RoutedEventArgs e)
     {
-        if (!ApplyCurrentSettings())
+        if (!TryReadControls())
         {
             return;
         }
@@ -136,7 +125,7 @@ public partial class SettingsWindow : Window
 
     private bool TryReadControls()
     {
-        if (!TryReadNumber(CapsuleWidthTextBox.Text, 120, 360, "胶囊宽度", out var width) ||
+        if (!TryReadNumber(CapsuleWidthTextBox.Text, 132, 360, "胶囊宽度", out var width) ||
             !TryReadNumber(CapsuleHeightTextBox.Text, 36, 90, "胶囊高度", out var height))
         {
             return false;

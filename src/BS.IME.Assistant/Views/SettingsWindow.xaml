@@ -237,7 +237,7 @@
                                 <TextBlock Text="启用 IME 助手" Style="{StaticResource SettingTitleStyle}"/>
                                 <TextBlock Text="暂停后不会根据当前软件自动切换输入法。" Style="{StaticResource SettingDescriptionStyle}"/>
                             </StackPanel>
-                            <CheckBox x:Name="EnabledCheckBox" Grid.Column="1" Style="{StaticResource ToggleSwitchStyle}" Margin="16,0" VerticalAlignment="Center"/>
+                            <CheckBox x:Name="EnabledCheckBox" Grid.Column="1" Style="{StaticResource ToggleSwitchStyle}" Margin="16,0" VerticalAlignment="Center" AutomationProperties.Name="启用 IME 助手"/>
                         </Grid>
                         <Border Style="{StaticResource RowSeparatorStyle}"/>
                         <Grid Style="{StaticResource SettingRowStyle}">
@@ -246,25 +246,7 @@
                                 <TextBlock Text="开机启动" Style="{StaticResource SettingTitleStyle}"/>
                                 <TextBlock Text="登录 Windows 后自动启动 BS IME Assistant。" Style="{StaticResource SettingDescriptionStyle}"/>
                             </StackPanel>
-                            <CheckBox x:Name="StartWithWindowsCheckBox" Grid.Column="1" Style="{StaticResource ToggleSwitchStyle}" Margin="16,0" VerticalAlignment="Center"/>
-                        </Grid>
-                        <Border Style="{StaticResource RowSeparatorStyle}"/>
-                        <Grid Style="{StaticResource SettingRowStyle}">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                            <StackPanel Margin="16,10">
-                                <TextBlock Text="显示悬浮状态胶囊" Style="{StaticResource SettingTitleStyle}"/>
-                                <TextBlock Text="在屏幕上显示当前输入法状态。" Style="{StaticResource SettingDescriptionStyle}"/>
-                            </StackPanel>
-                            <CheckBox x:Name="FloatingEnabledCheckBox" Grid.Column="1" Style="{StaticResource ToggleSwitchStyle}" Margin="16,0" VerticalAlignment="Center"/>
-                        </Grid>
-                        <Border Style="{StaticResource RowSeparatorStyle}"/>
-                        <Grid Style="{StaticResource SettingRowStyle}">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                            <StackPanel Margin="16,10">
-                                <TextBlock Text="胶囊置顶" Style="{StaticResource SettingTitleStyle}"/>
-                                <TextBlock Text="让胶囊浮在 AutoCAD、3ds Max 等窗口上方。" Style="{StaticResource SettingDescriptionStyle}"/>
-                            </StackPanel>
-                            <CheckBox x:Name="FloatingTopmostCheckBox" Grid.Column="1" Style="{StaticResource ToggleSwitchStyle}" Margin="16,0" VerticalAlignment="Center"/>
+                            <CheckBox x:Name="StartWithWindowsCheckBox" Grid.Column="1" Style="{StaticResource ToggleSwitchStyle}" Margin="16,0" VerticalAlignment="Center" AutomationProperties.Name="开机启动"/>
                         </Grid>
                     </StackPanel>
                 </Border>
@@ -278,7 +260,7 @@
                                 <TextBlock Text="中文输入法" Style="{StaticResource SettingTitleStyle}"/>
                                 <TextBlock x:Name="ChineseHklTextBlock" Style="{StaticResource SettingDescriptionStyle}"/>
                             </StackPanel>
-                            <ComboBox x:Name="ChineseImeComboBox" Grid.Column="1" Width="300" Margin="16,0" VerticalAlignment="Center" DisplayMemberPath="FriendlyName"/>
+                            <ComboBox x:Name="ChineseImeComboBox" Grid.Column="1" Width="300" Margin="16,0" VerticalAlignment="Center" DisplayMemberPath="FriendlyName" AutomationProperties.Name="中文输入法"/>
                         </Grid>
                         <Border Style="{StaticResource RowSeparatorStyle}"/>
                         <Grid Style="{StaticResource SettingRowStyle}">
@@ -287,7 +269,7 @@
                                 <TextBlock Text="英文输入法" Style="{StaticResource SettingTitleStyle}"/>
                                 <TextBlock x:Name="EnglishHklTextBlock" Style="{StaticResource SettingDescriptionStyle}"/>
                             </StackPanel>
-                            <ComboBox x:Name="EnglishImeComboBox" Grid.Column="1" Width="300" Margin="16,0" VerticalAlignment="Center" DisplayMemberPath="FriendlyName"/>
+                            <ComboBox x:Name="EnglishImeComboBox" Grid.Column="1" Width="300" Margin="16,0" VerticalAlignment="Center" DisplayMemberPath="FriendlyName" AutomationProperties.Name="英文输入法"/>
                         </Grid>
                     </StackPanel>
                 </Border>
@@ -301,7 +283,7 @@
                                 <TextBlock Text="启用 AutoCAD 增强" Style="{StaticResource SettingTitleStyle}"/>
                                 <TextBlock Text="允许 CAD 插件把文字编辑状态发送给助手。" Style="{StaticResource SettingDescriptionStyle}"/>
                             </StackPanel>
-                            <CheckBox x:Name="CadIntegrationEnabledCheckBox" Grid.Column="1" Style="{StaticResource ToggleSwitchStyle}" Margin="16,0" VerticalAlignment="Center"/>
+                            <CheckBox x:Name="CadIntegrationEnabledCheckBox" Grid.Column="1" Style="{StaticResource ToggleSwitchStyle}" Margin="16,0" VerticalAlignment="Center" AutomationProperties.Name="启用 AutoCAD 增强"/>
                         </Grid>
                         <Border Style="{StaticResource RowSeparatorStyle}"/>
                         <Grid Style="{StaticResource SettingRowStyle}">
@@ -310,7 +292,7 @@
                                 <TextBlock Text="检测到 CAD 时提示" Style="{StaticResource SettingTitleStyle}"/>
                                 <TextBlock Text="首次检测到 AutoCAD 时显示启用增强的提示。" Style="{StaticResource SettingDescriptionStyle}"/>
                             </StackPanel>
-                            <CheckBox x:Name="CadPromptOnDetectCheckBox" Grid.Column="1" Style="{StaticResource ToggleSwitchStyle}" Margin="16,0" VerticalAlignment="Center"/>
+                            <CheckBox x:Name="CadPromptOnDetectCheckBox" Grid.Column="1" Style="{StaticResource ToggleSwitchStyle}" Margin="16,0" VerticalAlignment="Center" AutomationProperties.Name="检测到 CAD 时提示"/>
                         </Grid>
                     </StackPanel>
                 </Border>
@@ -328,17 +310,21 @@
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Margin="16,10">
-                                        <TextBox Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        <TextBox Text="{Binding Name, Mode=OneWay}"
                                                  Width="210"
                                                  Height="22"
+                                                 IsReadOnly="True"
+                                                 IsTabStop="False"
                                                  BorderThickness="0"
                                                  Background="Transparent"
                                                  Foreground="{StaticResource TextMain}"
                                                  FontWeight="SemiBold"
                                                  Padding="0"/>
-                                        <TextBox Text="{Binding ProcessName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        <TextBox Text="{Binding ProcessName, Mode=OneWay}"
                                                  Width="210"
                                                  Height="22"
+                                                 IsReadOnly="True"
+                                                 IsTabStop="False"
                                                  BorderThickness="0"
                                                  Background="Transparent"
                                                  Foreground="{StaticResource TextSub}"
@@ -354,11 +340,11 @@
                                               VerticalAlignment="Center"/>
                                     <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="10,0" VerticalAlignment="Center">
                                         <TextBlock Text="激活切换" Foreground="{StaticResource TextSub}" Margin="0,0,8,0"/>
-                                        <CheckBox IsChecked="{Binding SwitchOnActivate, Mode=TwoWay}" Style="{StaticResource ToggleSwitchStyle}"/>
+                                        <CheckBox IsChecked="{Binding SwitchOnActivate, Mode=TwoWay}" Style="{StaticResource ToggleSwitchStyle}" AutomationProperties.Name="{Binding Name, StringFormat={}{0} 激活切换}"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="3" Orientation="Horizontal" Margin="12,0,16,0" VerticalAlignment="Center">
                                         <TextBlock Text="启用" Foreground="{StaticResource TextSub}" Margin="0,0,8,0"/>
-                                        <CheckBox IsChecked="{Binding Enabled, Mode=TwoWay}" Style="{StaticResource ToggleSwitchStyle}"/>
+                                        <CheckBox IsChecked="{Binding Enabled, Mode=TwoWay}" Style="{StaticResource ToggleSwitchStyle}" AutomationProperties.Name="{Binding Name, StringFormat={}{0} 启用}"/>
                                     </StackPanel>
                                 </Grid>
                             </Border>
@@ -375,7 +361,7 @@
                                 <TextBlock Text="显示胶囊" Style="{StaticResource SettingTitleStyle}"/>
                                 <TextBlock Text="和常规设置中的显示状态保持同步。" Style="{StaticResource SettingDescriptionStyle}"/>
                             </StackPanel>
-                            <CheckBox x:Name="CapsuleEnabledCheckBox" Grid.Column="1" Style="{StaticResource ToggleSwitchStyle}" Margin="16,0" VerticalAlignment="Center"/>
+                            <CheckBox x:Name="CapsuleEnabledCheckBox" Grid.Column="1" Style="{StaticResource ToggleSwitchStyle}" Margin="16,0" VerticalAlignment="Center" AutomationProperties.Name="显示悬浮胶囊"/>
                         </Grid>
                         <Border Style="{StaticResource RowSeparatorStyle}"/>
                         <Grid Style="{StaticResource SettingRowStyle}">
@@ -384,17 +370,21 @@
                                 <TextBlock Text="置顶显示" Style="{StaticResource SettingTitleStyle}"/>
                                 <TextBlock Text="和常规设置中的胶囊置顶保持同步。" Style="{StaticResource SettingDescriptionStyle}"/>
                             </StackPanel>
-                            <CheckBox x:Name="CapsuleTopmostCheckBox" Grid.Column="1" Style="{StaticResource ToggleSwitchStyle}" Margin="16,0" VerticalAlignment="Center"/>
+                            <CheckBox x:Name="CapsuleTopmostCheckBox" Grid.Column="1" Style="{StaticResource ToggleSwitchStyle}" Margin="16,0" VerticalAlignment="Center" AutomationProperties.Name="胶囊置顶显示"/>
                         </Grid>
                         <Border Style="{StaticResource RowSeparatorStyle}"/>
                         <Grid Style="{StaticResource SettingRowStyle}">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                             <StackPanel Margin="16,10">
                                 <TextBlock Text="胶囊尺寸" Style="{StaticResource SettingTitleStyle}"/>
                                 <TextBlock Text="宽度和高度会在应用后立即生效。" Style="{StaticResource SettingDescriptionStyle}"/>
                             </StackPanel>
-                            <TextBox x:Name="CapsuleWidthTextBox" Grid.Column="1" Width="92" Margin="10,0" VerticalAlignment="Center"/>
-                            <TextBox x:Name="CapsuleHeightTextBox" Grid.Column="2" Width="92" Margin="0,0,16,0" VerticalAlignment="Center"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="10,0,16,0" VerticalAlignment="Center">
+                                <TextBlock Text="宽度" Foreground="{StaticResource TextSub}" Margin="0,0,6,0"/>
+                                <TextBox x:Name="CapsuleWidthTextBox" Width="72" AutomationProperties.Name="胶囊宽度"/>
+                                <TextBlock Text="高度" Foreground="{StaticResource TextSub}" Margin="12,0,6,0"/>
+                                <TextBox x:Name="CapsuleHeightTextBox" Width="72" AutomationProperties.Name="胶囊高度"/>
+                            </StackPanel>
                         </Grid>
                         <Border Style="{StaticResource RowSeparatorStyle}"/>
                         <Grid Style="{StaticResource SettingRowStyle}">
