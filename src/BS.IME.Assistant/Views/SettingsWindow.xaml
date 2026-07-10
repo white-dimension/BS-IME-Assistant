@@ -128,6 +128,7 @@
                         <Grid>
                             <ToggleButton x:Name="ToggleButton"
                                           Focusable="False"
+                                          Foreground="{TemplateBinding Foreground}"
                                           IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
                                           ClickMode="Press">
                                 <ToggleButton.Template>
@@ -141,6 +142,7 @@
                                                 <ContentPresenter Margin="12,0,34,0"
                                                                   VerticalAlignment="Center"
                                                                   HorizontalAlignment="Left"
+                                                                  TextElement.Foreground="{TemplateBinding Foreground}"
                                                                   Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}"
                                                                   ContentStringFormat="{Binding SelectionBoxItemStringFormat, RelativeSource={RelativeSource AncestorType=ComboBox}}"/>
                                                 <Path Data="M 0 0 L 5 5 L 10 0"
@@ -193,6 +195,139 @@
             <Setter Property="Padding" Value="10,6"/>
         </Style>
 
+        <Style x:Key="SliderDecreaseButtonStyle" TargetType="RepeatButton">
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RepeatButton">
+                        <Border Height="5"
+                                Background="{StaticResource Accent}"
+                                CornerRadius="3"
+                                VerticalAlignment="Center"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="SliderIncreaseButtonStyle" TargetType="RepeatButton">
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RepeatButton">
+                        <Border Height="5"
+                                Background="#4A4A4A"
+                                CornerRadius="3"
+                                VerticalAlignment="Center"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="SliderThumbStyle" TargetType="Thumb">
+            <Setter Property="Width" Value="18"/>
+            <Setter Property="Height" Value="18"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Thumb">
+                        <Border x:Name="ThumbRoot"
+                                Background="#FFFFFF"
+                                BorderBrush="{StaticResource Accent}"
+                                BorderThickness="2"
+                                CornerRadius="9"/>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ThumbRoot" Property="Background" Value="#EAF4FF"/>
+                            </Trigger>
+                            <Trigger Property="IsDragging" Value="True">
+                                <Setter TargetName="ThumbRoot" Property="Background" Value="{StaticResource Accent}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="DarkSliderStyle" TargetType="Slider">
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Slider">
+                        <Grid>
+                            <Track x:Name="PART_Track" VerticalAlignment="Center">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="{x:Static Slider.DecreaseLarge}"
+                                                  Style="{StaticResource SliderDecreaseButtonStyle}"/>
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb Style="{StaticResource SliderThumbStyle}"/>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="{x:Static Slider.IncreaseLarge}"
+                                                  Style="{StaticResource SliderIncreaseButtonStyle}"/>
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ScrollBarPageButtonStyle" TargetType="RepeatButton">
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="IsTabStop" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RepeatButton">
+                        <Border Background="Transparent"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="DarkScrollThumbStyle" TargetType="Thumb">
+            <Setter Property="MinHeight" Value="32"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Thumb">
+                        <Border x:Name="ScrollThumb"
+                                Margin="2,1"
+                                Background="#595959"
+                                CornerRadius="3"/>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ScrollThumb" Property="Background" Value="#747474"/>
+                            </Trigger>
+                            <Trigger Property="IsDragging" Value="True">
+                                <Setter TargetName="ScrollThumb" Property="Background" Value="{StaticResource Accent}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="ScrollBar">
+            <Setter Property="Width" Value="8"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ScrollBar">
+                        <Grid Width="8" Background="#1B1B1B">
+                            <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="{x:Static ScrollBar.PageUpCommand}"
+                                                  Style="{StaticResource ScrollBarPageButtonStyle}"/>
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb Style="{StaticResource DarkScrollThumbStyle}"/>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="{x:Static ScrollBar.PageDownCommand}"
+                                                  Style="{StaticResource ScrollBarPageButtonStyle}"/>
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style TargetType="Button">
             <Setter Property="MinWidth" Value="86"/>
             <Setter Property="Height" Value="34"/>
@@ -203,6 +338,36 @@
             <Setter Property="BorderBrush" Value="{StaticResource ControlBorder}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="ButtonRoot"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="7"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ButtonRoot" Property="Opacity" Value="0.88"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="ButtonRoot" Property="Opacity" Value="0.7"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="ButtonRoot" Property="BorderBrush" Value="{StaticResource Accent}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="ButtonRoot" Property="Opacity" Value="0.45"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
         <Style x:Key="PrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
             <Setter Property="Background" Value="{StaticResource Accent}"/>
@@ -258,7 +423,6 @@
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                             <StackPanel Margin="16,10">
                                 <TextBlock Text="中文输入法" Style="{StaticResource SettingTitleStyle}"/>
-                                <TextBlock x:Name="ChineseHklTextBlock" Style="{StaticResource SettingDescriptionStyle}"/>
                             </StackPanel>
                             <ComboBox x:Name="ChineseImeComboBox" Grid.Column="1" Width="300" Margin="16,0" VerticalAlignment="Center" DisplayMemberPath="FriendlyName" AutomationProperties.Name="中文输入法"/>
                         </Grid>
@@ -267,7 +431,6 @@
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                             <StackPanel Margin="16,10">
                                 <TextBlock Text="英文输入法" Style="{StaticResource SettingTitleStyle}"/>
-                                <TextBlock x:Name="EnglishHklTextBlock" Style="{StaticResource SettingDescriptionStyle}"/>
                             </StackPanel>
                             <ComboBox x:Name="EnglishImeComboBox" Grid.Column="1" Width="300" Margin="16,0" VerticalAlignment="Center" DisplayMemberPath="FriendlyName" AutomationProperties.Name="英文输入法"/>
                         </Grid>
@@ -335,17 +498,20 @@
                                               SelectedValue="{Binding DefaultIme, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                               SelectedValuePath="Tag"
                                               DisplayMemberPath="Content"
+                                              Foreground="{StaticResource TextMain}"
                                               Width="106"
                                               Margin="10,0"
                                               VerticalAlignment="Center"/>
-                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="10,0" VerticalAlignment="Center">
-                                        <TextBlock Text="激活切换" Foreground="{StaticResource TextSub}" Margin="0,0,8,0"/>
-                                        <CheckBox IsChecked="{Binding SwitchOnActivate, Mode=TwoWay}" Style="{StaticResource ToggleSwitchStyle}" AutomationProperties.Name="{Binding Name, StringFormat={}{0} 激活切换}"/>
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="3" Orientation="Horizontal" Margin="12,0,16,0" VerticalAlignment="Center">
-                                        <TextBlock Text="启用" Foreground="{StaticResource TextSub}" Margin="0,0,8,0"/>
-                                        <CheckBox IsChecked="{Binding Enabled, Mode=TwoWay}" Style="{StaticResource ToggleSwitchStyle}" AutomationProperties.Name="{Binding Name, StringFormat={}{0} 启用}"/>
-                                    </StackPanel>
+                                    <Grid Grid.Column="2" Margin="12,0" VerticalAlignment="Center">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="50"/></Grid.ColumnDefinitions>
+                                        <TextBlock Text="激活切换" Foreground="{StaticResource TextSub}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                        <CheckBox Grid.Column="1" IsChecked="{Binding SwitchOnActivate, Mode=TwoWay}" Style="{StaticResource ToggleSwitchStyle}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Name, StringFormat={}{0} 激活切换}"/>
+                                    </Grid>
+                                    <Grid Grid.Column="3" Margin="8,0,16,0" VerticalAlignment="Center">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="50"/></Grid.ColumnDefinitions>
+                                        <TextBlock Text="启用" Foreground="{StaticResource TextSub}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                        <CheckBox Grid.Column="1" IsChecked="{Binding Enabled, Mode=TwoWay}" Style="{StaticResource ToggleSwitchStyle}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Name, StringFormat={}{0} 启用}"/>
+                                    </Grid>
                                 </Grid>
                             </Border>
                         </DataTemplate>
@@ -359,7 +525,7 @@
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                             <StackPanel Margin="16,10">
                                 <TextBlock Text="显示胶囊" Style="{StaticResource SettingTitleStyle}"/>
-                                <TextBlock Text="和常规设置中的显示状态保持同步。" Style="{StaticResource SettingDescriptionStyle}"/>
+                                <TextBlock Text="在屏幕上显示当前输入法状态。" Style="{StaticResource SettingDescriptionStyle}"/>
                             </StackPanel>
                             <CheckBox x:Name="CapsuleEnabledCheckBox" Grid.Column="1" Style="{StaticResource ToggleSwitchStyle}" Margin="16,0" VerticalAlignment="Center" AutomationProperties.Name="显示悬浮胶囊"/>
                         </Grid>
@@ -368,22 +534,56 @@
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                             <StackPanel Margin="16,10">
                                 <TextBlock Text="置顶显示" Style="{StaticResource SettingTitleStyle}"/>
-                                <TextBlock Text="和常规设置中的胶囊置顶保持同步。" Style="{StaticResource SettingDescriptionStyle}"/>
+                                <TextBlock Text="让胶囊保持在 AutoCAD 和 3ds Max 窗口上方。" Style="{StaticResource SettingDescriptionStyle}"/>
                             </StackPanel>
                             <CheckBox x:Name="CapsuleTopmostCheckBox" Grid.Column="1" Style="{StaticResource ToggleSwitchStyle}" Margin="16,0" VerticalAlignment="Center" AutomationProperties.Name="胶囊置顶显示"/>
                         </Grid>
                         <Border Style="{StaticResource RowSeparatorStyle}"/>
-                        <Grid Style="{StaticResource SettingRowStyle}">
+                        <Grid Style="{StaticResource SettingRowStyle}" MinHeight="176">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                             <StackPanel Margin="16,10">
                                 <TextBlock Text="胶囊尺寸" Style="{StaticResource SettingTitleStyle}"/>
                                 <TextBlock Text="宽度和高度会在应用后立即生效。" Style="{StaticResource SettingDescriptionStyle}"/>
                             </StackPanel>
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="10,0,16,0" VerticalAlignment="Center">
-                                <TextBlock Text="宽度" Foreground="{StaticResource TextSub}" Margin="0,0,6,0"/>
-                                <TextBox x:Name="CapsuleWidthTextBox" Width="72" AutomationProperties.Name="胶囊宽度"/>
-                                <TextBlock Text="高度" Foreground="{StaticResource TextSub}" Margin="12,0,6,0"/>
-                                <TextBox x:Name="CapsuleHeightTextBox" Width="72" AutomationProperties.Name="胶囊高度"/>
+                            <StackPanel Grid.Column="1" Width="300" Margin="16,12,16,12" VerticalAlignment="Center">
+                                <Grid>
+                                    <TextBlock Text="宽度" Foreground="{StaticResource TextSub}"/>
+                                    <TextBlock HorizontalAlignment="Right"
+                                               Foreground="{StaticResource TextMain}"
+                                               FontWeight="SemiBold"
+                                               Text="{Binding ElementName=CapsuleWidthSlider, Path=Value, StringFormat={}{0:0} px}"/>
+                                </Grid>
+                                <Slider x:Name="CapsuleWidthSlider"
+                                        Minimum="132"
+                                        Maximum="360"
+                                        TickFrequency="4"
+                                        IsSnapToTickEnabled="True"
+                                        IsMoveToPointEnabled="True"
+                                        Style="{StaticResource DarkSliderStyle}"
+                                        AutomationProperties.Name="胶囊宽度"/>
+                                <Grid Margin="0,-2,0,8">
+                                    <TextBlock Text="最小 132 px" Foreground="{StaticResource TextMuted}" FontSize="11"/>
+                                    <TextBlock Text="最大 360 px" Foreground="{StaticResource TextMuted}" FontSize="11" HorizontalAlignment="Right"/>
+                                </Grid>
+                                <Grid>
+                                    <TextBlock Text="高度" Foreground="{StaticResource TextSub}"/>
+                                    <TextBlock HorizontalAlignment="Right"
+                                               Foreground="{StaticResource TextMain}"
+                                               FontWeight="SemiBold"
+                                               Text="{Binding ElementName=CapsuleHeightSlider, Path=Value, StringFormat={}{0:0} px}"/>
+                                </Grid>
+                                <Slider x:Name="CapsuleHeightSlider"
+                                        Minimum="36"
+                                        Maximum="90"
+                                        TickFrequency="2"
+                                        IsSnapToTickEnabled="True"
+                                        IsMoveToPointEnabled="True"
+                                        Style="{StaticResource DarkSliderStyle}"
+                                        AutomationProperties.Name="胶囊高度"/>
+                                <Grid Margin="0,-2,0,0">
+                                    <TextBlock Text="最小 36 px" Foreground="{StaticResource TextMuted}" FontSize="11"/>
+                                    <TextBlock Text="最大 90 px" Foreground="{StaticResource TextMuted}" FontSize="11" HorizontalAlignment="Right"/>
+                                </Grid>
                             </StackPanel>
                         </Grid>
                         <Border Style="{StaticResource RowSeparatorStyle}"/>

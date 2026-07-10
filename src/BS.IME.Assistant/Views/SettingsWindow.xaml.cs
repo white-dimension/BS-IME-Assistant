@@ -54,18 +54,15 @@ public partial class SettingsWindow : Window
 
         ChineseImeComboBox.ItemsSource = _languages;
         EnglishImeComboBox.ItemsSource = _languages;
-        ChineseImeComboBox.SelectionChanged += (_, _) => UpdateHklPreview();
-        EnglishImeComboBox.SelectionChanged += (_, _) => UpdateHklPreview();
         SelectIme(ChineseImeComboBox, _settings.TargetChineseHkl, preferChinese: true);
         SelectIme(EnglishImeComboBox, _settings.TargetEnglishHkl, preferChinese: false);
-        UpdateHklPreview();
 
         ProfilesList.ItemsSource = _settings.Profiles;
 
         CapsuleEnabledCheckBox.IsChecked = _settings.FloatingStatus.Enabled;
         CapsuleTopmostCheckBox.IsChecked = _settings.FloatingStatus.Topmost;
-        CapsuleWidthTextBox.Text = _settings.FloatingStatus.Width.ToString("0");
-        CapsuleHeightTextBox.Text = _settings.FloatingStatus.Height.ToString("0");
+        CapsuleWidthSlider.Value = _settings.FloatingStatus.Width;
+        CapsuleHeightSlider.Value = _settings.FloatingStatus.Height;
     }
 
     private void ApplyButton_Click(object sender, RoutedEventArgs e)
@@ -125,19 +122,13 @@ public partial class SettingsWindow : Window
 
     private bool TryReadControls()
     {
-        if (!TryReadNumber(CapsuleWidthTextBox.Text, 132, 360, "胶囊宽度", out var width) ||
-            !TryReadNumber(CapsuleHeightTextBox.Text, 36, 90, "胶囊高度", out var height))
-        {
-            return false;
-        }
-
         _settings.Enabled = EnabledCheckBox.IsChecked == true;
         _settings.StartWithWindows = StartWithWindowsCheckBox.IsChecked == true;
 
         _settings.FloatingStatus.Enabled = CapsuleEnabledCheckBox.IsChecked == true;
         _settings.FloatingStatus.Topmost = CapsuleTopmostCheckBox.IsChecked == true;
-        _settings.FloatingStatus.Width = width;
-        _settings.FloatingStatus.Height = height;
+        _settings.FloatingStatus.Width = Math.Round(CapsuleWidthSlider.Value);
+        _settings.FloatingStatus.Height = Math.Round(CapsuleHeightSlider.Value);
 
         _settings.CadIntegration.Enabled = CadIntegrationEnabledCheckBox.IsChecked == true;
         _settings.CadIntegration.PromptOnDetect = CadPromptOnDetectCheckBox.IsChecked == true;
@@ -179,17 +170,6 @@ public partial class SettingsWindow : Window
         return true;
     }
 
-    private void UpdateHklPreview()
-    {
-        ChineseHklTextBlock.Text = ChineseImeComboBox.SelectedItem is InputLanguageInfo chinese
-            ? $"高级信息 HKL: {chinese.Hkl}"
-            : "高级信息 HKL: 未选择";
-
-        EnglishHklTextBlock.Text = EnglishImeComboBox.SelectedItem is InputLanguageInfo english
-            ? $"高级信息 HKL: {english.Hkl}"
-            : "高级信息 HKL: 未选择";
-    }
-
     private void SelectIme(System.Windows.Controls.ComboBox comboBox, string hkl, bool preferChinese)
     {
         var selected = _languages.FirstOrDefault(x => ImeService.HklEquals(x.Hkl, hkl));
@@ -199,17 +179,6 @@ public partial class SettingsWindow : Window
         selected ??= _languages.FirstOrDefault();
 
         comboBox.SelectedItem = selected;
-    }
-
-    private bool TryReadNumber(string value, double min, double max, string label, out double number)
-    {
-        if (!double.TryParse(value, out number) || number < min || number > max)
-        {
-            System.Windows.MessageBox.Show(this, $"{label}需要在 {min:0}-{max:0} 之间。", "BS IME Assistant", MessageBoxButton.OK, MessageBoxImage.Warning);
-            return false;
-        }
-
-        return true;
     }
 
     private AppSettings Clone(AppSettings source)
