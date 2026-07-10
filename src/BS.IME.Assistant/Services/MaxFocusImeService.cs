@@ -83,7 +83,7 @@ public sealed class MaxFocusImeService
             if (focused.TryGetCurrentPattern(ValuePattern.Pattern, out var vpObj))
             {
                 var vp = (ValuePattern)vpObj;
-                if (!vp.Current.IsReadOnly)
+                if (!vp.Current.IsReadOnly && IsValuePatternTextInput(focused))
                 {
                     return HandleTextInput("zh", "Name/text edit", signature, window);
                 }
@@ -187,6 +187,20 @@ public sealed class MaxFocusImeService
     private static bool HasPattern(AutomationElement element, AutomationPattern pattern)
     {
         return element.TryGetCurrentPattern(pattern, out _);
+    }
+
+    private static bool IsValuePatternTextInput(AutomationElement element)
+    {
+        var control = element.Current;
+        if (control.ControlType == ControlType.Edit || control.ControlType == ControlType.Document)
+        {
+            return true;
+        }
+
+        var className = control.ClassName ?? "";
+        return className.Contains("Edit", StringComparison.OrdinalIgnoreCase) ||
+            className.Contains("TextBox", StringComparison.OrdinalIgnoreCase) ||
+            className.Contains("LineEdit", StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool TryGetTextContent(AutomationElement element, out string text)

@@ -33,8 +33,10 @@
                         Height="28"
                         CornerRadius="14"
                         Background="#33FFFFFF"
+                        Cursor="Hand"
                         HorizontalAlignment="Center"
-                        VerticalAlignment="Center">
+                        VerticalAlignment="Center"
+                        MouseLeftButtonDown="Badge_MouseLeftButtonDown">
                     <TextBlock x:Name="BadgeText"
                                Text="EN"
                                Foreground="White"

@@ -9,6 +9,13 @@ The installer does four things:
 3. Optionally installs the AutoCAD ApplicationPlugin bundle under `%APPDATA%\Autodesk\ApplicationPlugins\BS-CAD-Tools.bundle`.
 4. Optionally installs the 3ds Max startup loader into detected `%LOCALAPPDATA%\Autodesk\3dsMax\<version>\ENU\scripts\startup` folders.
 
+Before copying files, the installer checks for existing BS-related local files and asks before continuing. It currently reports:
+
+- Existing BS IME Assistant app/settings folders.
+- Existing BS-CAD-Tools and BS-CAD-Standard AutoCAD plugin bundles or loose plugin files under user/local/common Autodesk ApplicationPlugins folders.
+- Existing BS-CAD-Tools settings under `%APPDATA%\BS-CAD-Tools`.
+- Existing 3ds Max BS IME startup/bridge scripts in detected 3ds Max user folders.
+
 ## Build
 
 Install Inno Setup 6 first, then run from this folder:

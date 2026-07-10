@@ -26,13 +26,15 @@ public partial class FloatingStatusWindow : Window
     public event Action<double, double>? PositionChangedByUser;
     public event Action? PromptAccepted;
     public event Action? PromptDismissed;
+    public event Action? SwitchChineseRequested;
+    public event Action? SwitchEnglishRequested;
 
     public void UpdateStatus(string currentIme)
     {
         StatusPanel.Visibility = Visibility.Visible;
         PromptPanel.Visibility = Visibility.Collapsed;
 
-        if (currentIme == "中文")
+        if (IsChineseImeText(currentIme))
         {
             BadgeText.Text = "中";
             StatusText.Text = "中文输入";
@@ -41,7 +43,7 @@ public partial class FloatingStatusWindow : Window
             return;
         }
 
-        if (currentIme == "英文")
+        if (IsEnglishImeText(currentIme))
         {
             BadgeText.Text = "EN";
             StatusText.Text = "英文输入";
@@ -108,6 +110,11 @@ public partial class FloatingStatusWindow : Window
 
     private void Capsule_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
+        if (e.OriginalSource == Badge || e.OriginalSource == BadgeText)
+        {
+            return;
+        }
+
         if (e.ButtonState != MouseButtonState.Pressed)
         {
             return;
@@ -122,6 +129,24 @@ public partial class FloatingStatusWindow : Window
         catch (InvalidOperationException)
         {
             // DragMove can throw if the mouse state changes during a drag.
+        }
+    }
+
+    private void Badge_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        e.Handled = true;
+
+        if (BadgeText.Text.Equals("中", StringComparison.OrdinalIgnoreCase) ||
+            BadgeText.Text.Equals("ZH", StringComparison.OrdinalIgnoreCase))
+        {
+            SwitchChineseRequested?.Invoke();
+            return;
+        }
+
+        if (BadgeText.Text.Equals("EN", StringComparison.OrdinalIgnoreCase) ||
+            BadgeText.Text.Equals("英", StringComparison.OrdinalIgnoreCase))
+        {
+            SwitchEnglishRequested?.Invoke();
         }
     }
 
@@ -156,6 +181,14 @@ public partial class FloatingStatusWindow : Window
         var style = GetWindowLong(handle, GwlExStyle);
         _ = SetWindowLong(handle, GwlExStyle, style | WsExToolWindow | WsExNoActivate);
     }
+
+    private static bool IsChineseImeText(string text) =>
+        text.Contains("中", StringComparison.OrdinalIgnoreCase) ||
+        text.Contains("zh", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsEnglishImeText(string text) =>
+        text.Contains("英", StringComparison.OrdinalIgnoreCase) ||
+        text.Contains("en", StringComparison.OrdinalIgnoreCase);
 
     private static SolidColorBrush BrushFrom(string color)
     {

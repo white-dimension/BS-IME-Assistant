@@ -1,5 +1,7 @@
 using System.Windows.Threading;
 using BS.IME.Assistant.Models;
+using BS.IME.Assistant.Views;
+using Microsoft.Win32;
 
 namespace BS.IME.Assistant.Services;
 
@@ -54,16 +56,19 @@ public sealed class AppController : IDisposable
         _floatingStatusService.Initialize(_settings);
         _floatingStatusService.CadPromptAccepted += () => _cadService.EnableIntegration(_settings);
         _floatingStatusService.CadPromptDismissed += () => _cadService.DismissPrompt();
+        _floatingStatusService.SwitchChineseRequested += () => ManualSwitch("zh", "floating");
+        _floatingStatusService.SwitchEnglishRequested += () => ManualSwitch("en", "floating");
         _pipeCommandService.CommandReceived += OnPipeCommandReceived;
         _pipeCommandService.Start();
 
         _trayService.ToggleEnabledRequested += ToggleEnabled;
         _trayService.ShowFloatingRequested += _floatingStatusService.Show;
         _trayService.HideFloatingRequested += _floatingStatusService.Hide;
+        _trayService.OpenSettingsRequested += OpenSettingsWindow;
+        _trayService.ResetFloatingRequested += _floatingStatusService.ResetPositionToBottomRight;
         _trayService.SwitchChineseRequested += () => ManualSwitch("zh", "tray");
         _trayService.SwitchEnglishRequested += () => ManualSwitch("en", "tray");
-        _trayService.OpenSettingsRequested += () => TrayService.OpenPath(_settingsService.SettingsPath, _logger);
-        _trayService.OpenLogsRequested += () => TrayService.OpenPath(_logger.LogDirectory, _logger);
+        _trayService.RestartRequested += RestartApplication;
         _trayService.ExitRequested += () => System.Windows.Application.Current.Shutdown();
         _trayService.Initialize(_settings.Enabled);
 
@@ -178,6 +183,7 @@ public sealed class AppController : IDisposable
             }
 
             var profile = _settings.Profiles.FirstOrDefault(x =>
+                x.Enabled &&
                 x.SwitchOnActivate &&
                 string.Equals(NormalizeProcessName(x.ProcessName), NormalizeProcessName(window.ProcessName), StringComparison.OrdinalIgnoreCase));
 
@@ -237,6 +243,95 @@ public sealed class AppController : IDisposable
         _settingsService.Save(_settings);
         _window.UpdateInfo(_settings.Enabled, _settings.TargetChineseHkl, _settings.TargetEnglishHkl, _settingsService.SettingsPath, _logger.LogPath);
         _logger.Info(_settings.Enabled ? "Auto switch enabled." : "Auto switch paused.");
+    }
+
+    private void OpenSettingsWindow()
+    {
+        try
+        {
+            var languages = _imeService.GetInstalledInputLanguages();
+            var settingsWindow = new SettingsWindow(
+                _settings,
+                languages,
+                _settingsService,
+                _logger,
+                _floatingStatusService.ResetPositionToBottomRight,
+                _floatingStatusService.ClampPositionToScreen)
+            {
+                Owner = _window
+            };
+            settingsWindow.ApplyRequested += appliedSettings => ApplySettings(appliedSettings, languages);
+
+            if (settingsWindow.ShowDialog() != true)
+            {
+                return;
+            }
+
+            ApplySettings(settingsWindow.Settings, languages);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error("Failed to open settings window.", ex);
+        }
+    }
+
+    private void ApplySettings(AppSettings settings, IReadOnlyList<InputLanguageInfo> languages)
+    {
+        _settings = settings;
+        _imeService.EnsureTargets(_settings, languages, _settingsService);
+        _settingsService.Save(_settings);
+        ApplyStartupRegistration(_settings.StartWithWindows);
+        _floatingStatusService.ApplySettings(_settings);
+        _window.UpdateInfo(_settings.Enabled, _settings.TargetChineseHkl, _settings.TargetEnglishHkl, _settingsService.SettingsPath, _logger.LogPath);
+        _trayService.Update(_settings.Enabled, _lastWindow?.ProcessName ?? "", "未知");
+        _logger.Info("Settings applied.");
+    }
+
+    private void ApplyStartupRegistration(bool enabled)
+    {
+        try
+        {
+            using var key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run");
+            if (enabled)
+            {
+                var exe = Environment.ProcessPath;
+                if (!string.IsNullOrWhiteSpace(exe))
+                {
+                    key?.SetValue("BS-IME-Assistant", $"\"{exe}\"");
+                }
+            }
+            else
+            {
+                key?.DeleteValue("BS-IME-Assistant", throwOnMissingValue: false);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error("Failed to update Windows startup registration.", ex);
+        }
+    }
+
+    private void RestartApplication()
+    {
+        try
+        {
+            var exe = Environment.ProcessPath;
+            if (!string.IsNullOrWhiteSpace(exe) && File.Exists(exe))
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = exe,
+                    UseShellExecute = true,
+                    WorkingDirectory = AppContext.BaseDirectory
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error("Failed to restart application.", ex);
+        }
+
+        System.Windows.Application.Current.Shutdown();
     }
 
     private void OnPipeCommandReceived(Models.PipeImeCommand command)

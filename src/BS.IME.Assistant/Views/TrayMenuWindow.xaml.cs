@@ -17,7 +17,8 @@ public partial class TrayMenuWindow : Window
     public event Action? ShowFloatingRequested;
     public event Action? HideFloatingRequested;
     public event Action? OpenSettingsRequested;
-    public event Action? OpenLogsRequested;
+    public event Action? ResetFloatingRequested;
+    public event Action? RestartRequested;
     public event Action? ExitRequested;
 
     public void UpdateState(bool enabled, string processName, string currentIme)
@@ -61,7 +62,9 @@ public partial class TrayMenuWindow : Window
 
     private void OpenSettingsButton_Click(object sender, RoutedEventArgs e) => InvokeAndHide(OpenSettingsRequested);
 
-    private void OpenLogsButton_Click(object sender, RoutedEventArgs e) => InvokeAndHide(OpenLogsRequested);
+    private void ResetFloatingButton_Click(object sender, RoutedEventArgs e) => InvokeAndHide(ResetFloatingRequested);
+
+    private void RestartButton_Click(object sender, RoutedEventArgs e) => InvokeAndHide(RestartRequested);
 
     private void ExitButton_Click(object sender, RoutedEventArgs e) => InvokeAndHide(ExitRequested);
 

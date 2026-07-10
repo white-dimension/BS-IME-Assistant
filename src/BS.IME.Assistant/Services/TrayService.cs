@@ -26,7 +26,8 @@ public sealed class TrayService : IDisposable
     public event Action? ShowFloatingRequested;
     public event Action? HideFloatingRequested;
     public event Action? OpenSettingsRequested;
-    public event Action? OpenLogsRequested;
+    public event Action? ResetFloatingRequested;
+    public event Action? RestartRequested;
     public event Action? ExitRequested;
 
     public void Initialize(bool enabled)
@@ -99,7 +100,8 @@ public sealed class TrayService : IDisposable
         _menuWindow.ShowFloatingRequested += () => ShowFloatingRequested?.Invoke();
         _menuWindow.HideFloatingRequested += () => HideFloatingRequested?.Invoke();
         _menuWindow.OpenSettingsRequested += () => OpenSettingsRequested?.Invoke();
-        _menuWindow.OpenLogsRequested += () => OpenLogsRequested?.Invoke();
+        _menuWindow.ResetFloatingRequested += () => ResetFloatingRequested?.Invoke();
+        _menuWindow.RestartRequested += () => RestartRequested?.Invoke();
         _menuWindow.ExitRequested += () => ExitRequested?.Invoke();
         _menuWindow.UpdateState(_enabled, _processName, _currentIme);
     }

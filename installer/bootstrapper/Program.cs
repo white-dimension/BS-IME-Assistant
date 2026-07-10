@@ -12,6 +12,7 @@ internal static class Program
 
     private static string LocalAppData => Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
     private static string RoamingAppData => Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+    private static string CommonAppData => Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
     private static string AppDir => Path.Combine(LocalAppData, "BS-IME-Assistant");
 
     private static int Main(string[] args)
@@ -58,6 +59,15 @@ internal static class Program
             var maxSource = Path.Combine(payloadRoot, "max");
 
             if (!Directory.Exists(appSource)) throw new DirectoryNotFoundException(appSource);
+
+            var existingInstallations = DetectExistingInstallations();
+            if (!ConfirmOverwrite(existingInstallations))
+            {
+                Console.WriteLine("Installation cancelled. Existing files were not changed.");
+                Console.WriteLine("Press Enter to close.");
+                Console.ReadLine();
+                return 2;
+            }
 
             StopAssistantIfRunning();
 
@@ -137,6 +147,105 @@ internal static class Program
             var destinationPath = Path.Combine(destinationDir, relative);
             Directory.CreateDirectory(Path.GetDirectoryName(destinationPath)!);
             File.Copy(sourcePath, destinationPath, overwrite: true);
+        }
+    }
+
+    private static List<ExistingInstallation> DetectExistingInstallations()
+    {
+        var results = new List<ExistingInstallation>();
+
+        AddPathIfExists(results, "BS IME Assistant app", AppDir);
+        AddPathIfExists(results, "BS IME Assistant settings", Path.Combine(RoamingAppData, "BS-IME-Assistant"));
+
+        foreach (var pluginRoot in GetAutoCadPluginRoots())
+        {
+            AddMatchingDirectories(results, "AutoCAD plugin bundle", pluginRoot, "BS-CAD-Tools.bundle");
+            AddMatchingDirectories(results, "AutoCAD plugin bundle", pluginRoot, "BS-CAD-Standard*.bundle");
+            AddMatchingDirectories(results, "AutoCAD plugin bundle", pluginRoot, "BS_CAD_STANDARD*.bundle");
+            AddMatchingFiles(results, "AutoCAD loose plugin file", pluginRoot, "BS.CAD.Tools.dll");
+            AddMatchingFiles(results, "AutoCAD loose plugin file", pluginRoot, "BS_CAD_STANDARD*_Plugin.dll");
+            AddMatchingFiles(results, "AutoCAD loose plugin file", pluginRoot, "BS_CAD_TOOLS_LOAD.lsp");
+        }
+
+        AddPathIfExists(results, "BS-CAD-Tools settings", Path.Combine(RoamingAppData, "BS-CAD-Tools"));
+
+        var maxUserRoot = GetMaxUserRoot();
+        if (Directory.Exists(maxUserRoot))
+        {
+            foreach (var versionDir in Directory.EnumerateDirectories(maxUserRoot))
+            {
+                var startupDir = Path.Combine(versionDir, "ENU", "scripts", "startup");
+                AddPathIfExists(results, "3ds Max startup bridge", Path.Combine(startupDir, "BS_IME_Startup.ms"));
+                AddPathIfExists(results, "3ds Max legacy bridge", Path.Combine(startupDir, "BS_IME_Bridge.ms"));
+            }
+        }
+
+        AddPathIfExists(results, "3ds Max staged bridge", Path.Combine(AppDir, "3dsMax"));
+
+        return results
+            .GroupBy(x => x.Path, StringComparer.OrdinalIgnoreCase)
+            .Select(x => x.First())
+            .OrderBy(x => x.Category, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(x => x.Path, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static bool ConfirmOverwrite(IReadOnlyList<ExistingInstallation> existingInstallations)
+    {
+        if (existingInstallations.Count == 0)
+        {
+            Console.WriteLine("No existing BS CAD/3ds Max plugin files detected.");
+            return true;
+        }
+
+        Console.WriteLine();
+        Console.WriteLine("Existing BS-related files were detected:");
+        foreach (var item in existingInstallations)
+        {
+            Console.WriteLine($"  - [{item.Category}] {item.Path}");
+        }
+
+        Console.WriteLine();
+        Console.WriteLine("These files may be overwritten or reused by this installer.");
+        Console.Write("Overwrite and continue? Type Y to continue, or N to cancel [N]: ");
+
+        var answer = Console.ReadLine()?.Trim();
+        return string.Equals(answer, "Y", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(answer, "YES", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static IEnumerable<string> GetAutoCadPluginRoots()
+    {
+        yield return Path.Combine(RoamingAppData, "Autodesk", "ApplicationPlugins");
+        yield return Path.Combine(LocalAppData, "Autodesk", "ApplicationPlugins");
+        yield return Path.Combine(CommonAppData, "Autodesk", "ApplicationPlugins");
+    }
+
+    private static void AddPathIfExists(List<ExistingInstallation> results, string category, string path)
+    {
+        if (File.Exists(path) || Directory.Exists(path))
+        {
+            results.Add(new ExistingInstallation(category, path));
+        }
+    }
+
+    private static void AddMatchingDirectories(List<ExistingInstallation> results, string category, string root, string pattern)
+    {
+        if (!Directory.Exists(root)) return;
+
+        foreach (var path in Directory.EnumerateDirectories(root, pattern, SearchOption.TopDirectoryOnly))
+        {
+            results.Add(new ExistingInstallation(category, path));
+        }
+    }
+
+    private static void AddMatchingFiles(List<ExistingInstallation> results, string category, string root, string pattern)
+    {
+        if (!Directory.Exists(root)) return;
+
+        foreach (var path in Directory.EnumerateFiles(root, pattern, SearchOption.AllDirectories))
+        {
+            results.Add(new ExistingInstallation(category, path));
         }
     }
 
@@ -314,4 +423,6 @@ internal static class Program
     {
         return "\"" + value.Replace("\"", "\\\"") + "\"";
     }
+
+    private sealed record ExistingInstallation(string Category, string Path);
 }

@@ -112,6 +112,19 @@ public sealed class SettingsService
                     changed = true;
                 }
 
+                if (!IsSupportedProfile(profile.ProcessName))
+                {
+                    changed = true;
+                    _logger.Info($"Removed unsupported software profile: {profile.ProcessName}");
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(profile.Name))
+                {
+                    profile.Name = Path.GetFileNameWithoutExtension(profile.ProcessName);
+                    changed = true;
+                }
+
                 if (!profile.DefaultIme.Equals("en", StringComparison.OrdinalIgnoreCase) &&
                     !profile.DefaultIme.Equals("zh", StringComparison.OrdinalIgnoreCase))
                 {
@@ -121,6 +134,19 @@ public sealed class SettingsService
                 }
 
                 validProfiles.Add(profile);
+            }
+
+            foreach (var defaultProfile in AppSettings.CreateDefaultProfiles())
+            {
+                if (validProfiles.Any(profile =>
+                    string.Equals(profile.ProcessName, defaultProfile.ProcessName, StringComparison.OrdinalIgnoreCase)))
+                {
+                    continue;
+                }
+
+                validProfiles.Add(defaultProfile);
+                changed = true;
+                _logger.Info($"Restored required software profile: {defaultProfile.ProcessName}");
             }
 
             if (validProfiles.Count == 0)
@@ -185,4 +211,8 @@ public sealed class SettingsService
 
         return changed;
     }
+
+    private static bool IsSupportedProfile(string processName) =>
+        processName.Equals("acad.exe", StringComparison.OrdinalIgnoreCase) ||
+        processName.Equals("3dsmax.exe", StringComparison.OrdinalIgnoreCase);
 }

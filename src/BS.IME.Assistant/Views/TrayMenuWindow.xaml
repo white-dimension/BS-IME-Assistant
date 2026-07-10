@@ -81,18 +81,14 @@
             <Border Height="1" Background="#3A3A3A" Margin="2,6"/>
 
             <Button x:Name="ToggleButton" Style="{StaticResource MenuButtonStyle}" Click="ToggleButton_Click"/>
-            <Button Content="显示悬浮窗" Style="{StaticResource MenuButtonStyle}" Click="ShowFloatingButton_Click"/>
-            <Button Content="隐藏悬浮窗" Style="{StaticResource MenuButtonStyle}" Click="HideFloatingButton_Click"/>
+            <Button Content="显示胶囊" Style="{StaticResource MenuButtonStyle}" Click="ShowFloatingButton_Click"/>
+            <Button Content="隐藏胶囊" Style="{StaticResource MenuButtonStyle}" Click="HideFloatingButton_Click"/>
+            <Button Content="设置" Style="{StaticResource MenuButtonStyle}" Click="OpenSettingsButton_Click"/>
+            <Button Content="重置胶囊位置" Style="{StaticResource MenuButtonStyle}" Click="ResetFloatingButton_Click"/>
             <Button Content="切换到中文" Style="{StaticResource MenuButtonStyle}" Click="SwitchChineseButton_Click"/>
             <Button Content="切换到英文" Style="{StaticResource MenuButtonStyle}" Click="SwitchEnglishButton_Click"/>
 
-            <Border Height="1" Background="#3A3A3A" Margin="2,6"/>
-
-            <Button Content="打开配置文件" Style="{StaticResource MenuButtonStyle}" Click="OpenSettingsButton_Click"/>
-            <Button Content="打开日志目录" Style="{StaticResource MenuButtonStyle}" Click="OpenLogsButton_Click"/>
-
-            <Border Height="1" Background="#3A3A3A" Margin="2,6"/>
-
+            <Button Content="重启助手" Style="{StaticResource MenuButtonStyle}" Click="RestartButton_Click"/>
             <Button Content="退出" Style="{StaticResource MenuButtonStyle}" Click="ExitButton_Click"/>
         </StackPanel>
     </Border>

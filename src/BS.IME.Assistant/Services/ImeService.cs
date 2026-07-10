@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -215,9 +215,9 @@ public sealed class ImeService
         var description = GetImeDescription(hkl);
         var haystack = $"{cultureName} {displayName} {description}";
         var isChinese = cultureName.StartsWith("zh", StringComparison.OrdinalIgnoreCase)
-            || ContainsAny(haystack, ["微软", "拼音", "微信", "搜狗", "百度", "Rime", "小狼毫", "Chinese"]);
+            || ContainsAny(haystack, ["Microsoft", "Pinyin", "WeChat", "Sogou", "Baidu", "Rime", "Chinese", "中文", "拼音", "微软"]);
         var isEnglish = cultureName.StartsWith("en", StringComparison.OrdinalIgnoreCase)
-            || ContainsAny(haystack, ["English", "US"]);
+            || ContainsAny(haystack, ["English", "US", "Keyboard"]);
 
         return new InputLanguageInfo
         {
@@ -240,8 +240,8 @@ public sealed class ImeService
     private InputLanguageInfo? PickChinese(IReadOnlyList<InputLanguageInfo> languages) =>
         languages
             .Where(x => x.IsChinese)
-            .OrderByDescending(x => ContainsAny(x.FriendlyName, ["微软", "拼音"]))
-            .ThenByDescending(x => ContainsAny(x.FriendlyName, ["微信", "搜狗", "百度", "Rime", "小狼毫"]))
+            .OrderByDescending(x => ContainsAny(x.FriendlyName, ["Microsoft", "Pinyin", "微软", "拼音"]))
+            .ThenByDescending(x => ContainsAny(x.FriendlyName, ["WeChat", "Sogou", "Baidu", "Rime", "Chinese", "中文"]))
             .FirstOrDefault();
 
     private static string GetImeDescription(nint hkl)
