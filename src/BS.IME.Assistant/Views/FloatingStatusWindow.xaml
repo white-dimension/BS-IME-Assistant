@@ -1,0 +1,59 @@
+<Window x:Class="BS.IME.Assistant.Views.FloatingStatusWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="BS IME Status"
+        Width="180"
+        Height="40"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowActivated="False"
+        ShowInTaskbar="False"
+        SizeToContent="Manual"
+        Opacity="0.72"
+        MouseEnter="Window_MouseEnter"
+        MouseLeave="Window_MouseLeave">
+    <Border x:Name="Capsule"
+            CornerRadius="20"
+            Background="#991D4ED8"
+            BorderBrush="#40FFFFFF"
+            BorderThickness="1"
+            SnapsToDevicePixels="True"
+            MouseLeftButtonDown="Capsule_MouseLeftButtonDown">
+        <Grid>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="44"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Border x:Name="Badge"
+                        Width="28"
+                        Height="28"
+                        CornerRadius="14"
+                        Background="#33FFFFFF"
+                        Cursor="Hand"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        MouseLeftButtonDown="Badge_MouseLeftButtonDown">
+                    <TextBlock x:Name="BadgeText"
+                               Text="EN"
+                               Foreground="White"
+                               FontSize="11"
+                               FontWeight="Bold"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"/>
+                </Border>
+                <TextBlock x:Name="StatusText"
+                           Grid.Column="1"
+                           Text="英文输入"
+                           Foreground="White"
+                           FontSize="15"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis"/>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ApplicationPackage SchemaVersion="1.0"
+                    AutodeskProduct="AutoCAD"
+                    ProductType="Application"
+                    Name="BS-IME-Assistant-CadBridge"
+                    Description="AutoCAD IME recognition bridge for BS IME Assistant"
+                    AppVersion="1.0.0">
+  <CompanyDetails Name="White Dimension" />
+  <Components>
+    <RuntimeRequirements OS="Win64"
+                         Platform="AutoCAD"
+                         SeriesMin="R26.0"
+                         SeriesMax="R26.0" />
+    <ComponentEntry AppName="BS-IME-Assistant-CadBridge"
+                    AppDescription="AutoCAD text-edit detection for BS IME Assistant"
+                    ModuleName="./Contents/BS.IME.Assistant.CadBridge.dll"
+                    LoadOnAutoCADStartup="True" />
+  </Components>
+</ApplicationPackage>

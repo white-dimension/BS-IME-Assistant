@@ -1,0 +1,14 @@
+bin/
+obj/
+build-check/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+TestResults/
+installer/stage/
+installer/dist/
+installer/bootstrapper/Payload.zip
+installer/bootstrapper/bin/
+installer/bootstrapper/obj/
